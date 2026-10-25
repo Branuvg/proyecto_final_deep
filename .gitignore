@@ -218,3 +218,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Proyecto: contexto local, no se sube ---
+template.docx
+deep-learning-compendio.md
+venv/
+/data/
+checkpoints/
+outputs/
+*.ckpt
+*.pt
+*.npz
+*.parquet
+.ipynb_checkpoints/
+report/Proyecto_Final.docx

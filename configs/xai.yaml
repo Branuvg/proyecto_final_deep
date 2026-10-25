@@ -1,0 +1,6 @@
+seed: 2026
+data: data/worlds.npz
+task_a_dir: outputs/task_a
+out_dir: outputs/xai
+ig_steps: 1024
+kernel_check_n: 20

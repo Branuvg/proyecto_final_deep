@@ -7,21 +7,31 @@ Proyecto final de Deep Learning (UVG, Sección 10). Un simulador de civilizacion
 
 ## Instalación
 
-Requiere Python 3.12 y, para GPU, una NVIDIA con CUDA ≥ 12.8 (la RTX 5060 es Blackwell, sm_120).
+Probado con Python 3.12 (recomendado). Funciona en Windows, Linux y macOS, **con o sin GPU NVIDIA**: el código usa CUDA si existe y, si no, CPU.
 
 ```bash
-py -3.12 -m venv venv
-venv\Scripts\activate
+python -m venv venv
+venv\Scripts\activate            # Linux/macOS: source venv/bin/activate
+pip install -r requirements.txt   # instala PyTorch para CPU (o el build por defecto de tu plataforma)
+pip install -e .                  # registra el paquete worldsim (no hace falta PYTHONPATH)
+```
+
+**Con GPU NVIDIA**, instala antes PyTorch con CUDA y luego el resto (en una RTX 50xx / Blackwell hace falta CUDA >= 12.8):
+
+```bash
 pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt
+pip install -e .
 python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 
-El código elige CUDA si existe y, si no, CPU (también corre en Colab). Hay que colocar `template.docx` en la raíz solo para generar el documento (no se sube al repositorio).
+Para generar el documento hay que colocar `template.docx` en la raíz (no se sube al repositorio).
+
+**Ojo con la reproducibilidad entre máquinas:** las semillas están fijas, pero CPU y GPU (o distintas versiones de librerías) dan resultados numéricos ligeramente distintos. Los números del documento corresponden a la corrida en la RTX 5060. En CPU el entrenamiento tarda bastante más (ver "Tiempos" abajo).
 
 ## Cómo correr cada etapa
 
-Todos los comandos se ejecutan desde la raíz del repositorio con `PYTHONPATH=src` (en PowerShell: `$env:PYTHONPATH="src"`).
+Todos los comandos se ejecutan desde la raíz del repositorio (después de `pip install -e .`). Para correr todo en orden: `python scripts/run_all.py` (agrega `--skip-notebooks` para omitir los notebooks).
 
 | Etapa | Comando |
 |---|---|
@@ -33,6 +43,15 @@ Todos los comandos se ejecutan desde la raíz del repositorio con `PYTHONPATH=sr
 | Atribuciones XAI | `python -m worldsim.xai.run_xai --config configs/xai.yaml` |
 | Notebooks ejecutados | `python scripts/build_notebooks.py` |
 | Documento | `python report/build_report.py` → `report/Proyecto_Final.docx` |
+
+### Tiempos (referencia)
+
+| Máquina | Pipeline completo (`run_all.py --skip-notebooks`) |
+|---|---|
+| RTX 5060 (CUDA) | pocos minutos (los dos LSTM entrenan en ~1.3 min) |
+| Solo CPU (Windows, PyTorch 2.11 CPU) | ~25 min (los dos LSTM tardan ~20 min) |
+
+En la prueba en CPU las métricas coincidieron con las de GPU con diferencias de ~0.001 a 0.002 de ROC-AUC. Si una máquina es lenta, se puede correr primero `--skip-notebooks` y usar solo las etapas que se necesiten.
 
 ## Estructura
 

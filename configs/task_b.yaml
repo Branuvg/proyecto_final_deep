@@ -1,0 +1,6 @@
+seed: 2026
+data: data/worlds.npz
+out_dir: outputs/task_b
+task_a_dir: outputs/task_a
+lstm: {hidden: 128, layers: 1, dropout: 0.1, lr: 0.002, weight_decay: 0.01, batch_size: 512, max_epochs: 120, patience: 12, m_max_train: 70}
+lgbm: {n_estimators: 1000, learning_rate: 0.05, num_leaves: 31, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.9}

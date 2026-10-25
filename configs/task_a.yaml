@@ -1,0 +1,14 @@
+seed: 2026
+data: data/worlds.npz
+out_dir: outputs/task_a
+batch_size: 512
+max_epochs: 200
+patience: 15
+lgbm: {n_estimators: 1000, learning_rate: 0.05, num_leaves: 31, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.9}
+search:
+  n_trials: 12
+  space:
+    hidden: [[64], [128, 64], [256, 128], [256, 128, 64]]
+    dropout: [0.0, 0.1, 0.2, 0.3]
+    lr: [0.0003, 0.001, 0.003]
+    weight_decay: [0.0001, 0.01, 0.1]

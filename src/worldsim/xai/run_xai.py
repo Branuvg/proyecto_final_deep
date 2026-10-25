@@ -23,7 +23,7 @@ def main():
     set_seed(c["seed"]); dev = get_device()
     w = load_worlds(c["data"]); pre = Preprocessor(w)
     te = w.idx("test"); Xs = pre.static(w.X)
-    ck = torch.load(Path(c["task_a_dir"]) / "mlp_a.pt"); hp = ck["hp"]
+    ck = torch.load(Path(c["task_a_dir"]) / "mlp_a.pt", map_location="cpu"); hp = ck["hp"]
     net = MLP(ck["d_in"], tuple(hp["hidden"]), hp["dropout"]).to(dev); net.load_state_dict(ck["state"]); net.eval()
     gbm = pickle.load(open(Path(c["task_a_dir"]) / "lgbm_a.pkl", "rb"))
 

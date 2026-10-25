@@ -80,7 +80,7 @@ def main():
         t0 = time.time(); nets[mode], ep = train_lstm(w, pre, Xs, Q, tr, va, c, mode, dev, c["seed"])
         print(f"LSTM static_mode={mode}: {ep} epochs, {time.time()-t0:.0f}s")
         torch.save(nets[mode].state_dict(), out_dir / f"lstm_{mode}.pt")
-    mlp_a = torch.load(Path(c["task_a_dir"]) / "mlp_a.pt")
+    mlp_a = torch.load(Path(c["task_a_dir"]) / "mlp_a.pt", map_location="cpu")
     hp = mlp_a["hp"]; net_a = MLP(mlp_a["d_in"], tuple(hp["hidden"]), hp["dropout"]).to(dev); net_a.load_state_dict(mlp_a["state"]); net_a.eval()
 
     results = {}

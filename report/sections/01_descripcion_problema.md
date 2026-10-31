@@ -15,8 +15,8 @@ Sobre ese simulador planteamos dos tareas de predicción:
 
 ## 1.3 Por qué el problema es interesante: la explicación se puede verificar
 
-En la mayoría de aplicaciones de explicabilidad (XAI) no existe una "explicación verdadera" con la cual comparar. Aquí sí: el simulador es el mecanismo real y podemos **intervenir** un factor y observar qué ocurre. Por eso el eje del proyecto no es solo predecir, sino **medir qué tan fieles son las explicaciones** (SHAP, Integrated Gradients y, en la Fase 2, contrafactuales) frente a la realidad del simulador. Esto conecta con la advertencia de la sesión S15 del curso: *una explicación convincente no es una explicación correcta*, y debe validarse (Adebayo et al., 2018).
+En la mayoría de aplicaciones de explicabilidad (XAI) no existe una "explicación verdadera" con la cual comparar. Aquí sí: el simulador es el mecanismo real y podemos **intervenir** un factor y observar qué ocurre. Por eso el eje del proyecto no es solo predecir, sino **medir qué tan fieles son las explicaciones** (SHAP, Integrated Gradients, TreeSHAP y contrafactuales) frente a la realidad del simulador. Esto conecta con la advertencia de la sesión S15 del curso: *una explicación convincente no es una explicación correcta*, y debe validarse (Adebayo et al., 2018).
 
-## 1.4 Alcance de esta entrega (Fase 1)
+## 1.4 Alcance
 
-Esta versión incluye simulador validado, dataset, modelos para (a) y (b) con baselines y el cálculo de atribuciones. La validación de fidelidad contra el simulador, los contrafactuales, la interfaz, la presentación y el video quedan para la Fase 2.
+El proyecto incluye: el simulador validado contra el paper original, el dataset, los modelos para (a) y (b) con baselines, varias semillas e intervalos de confianza, el cálculo de atribuciones, la **validación de su fidelidad contra intervenciones en el modelo y en el simulador**, contrafactuales verificados con el simulador y una interfaz interactiva en Streamlit.

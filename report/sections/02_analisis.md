@@ -2,25 +2,28 @@
 
 ## 2.1 El modelo HANDY
 
-HANDY describe una sociedad con plebeyos (x_C), élites (x_E), naturaleza (y) y riqueza acumulada (w). La naturaleza se regenera de forma logística y se agota por el trabajo de los plebeyos; la riqueza es lo producido menos lo consumido; la mortalidad sube cuando la riqueza no alcanza para el consumo mínimo (hambruna). Las ecuaciones implementadas son:
+HANDY describe una sociedad con plebeyos (x_C), élites (x_E), naturaleza (y) y riqueza acumulada (w). La naturaleza se regenera de forma logística y se agota por el trabajo de los plebeyos; la riqueza es lo producido menos lo consumido; la mortalidad sube cuando la riqueza no alcanza para el consumo mínimo (hambruna). Verificamos las ecuaciones contra el texto del artículo original (Motesharrei et al., 2014; copia del autor), con su numeración:
 
-- Plebeyos: dx_C/dt = β x_C − α_C x_C. Élites: dx_E/dt = β x_E − α_E x_E.
-- Naturaleza: dy/dt = γ y (λ − y) − δ x_C y.
-- Riqueza: dw/dt = δ x_C y − C_C − C_E.
-- Consumo: C_C = min(1, w/w_th) s x_C y C_E = min(1, w/w_th) κ s x_E, con umbral de riqueza w_th = ρ x_C + κ ρ x_E.
-- Mortalidad: α = α_m + max(0, 1 − C/(s x)) (α_M − α_m).
+- Ec. (3): dx_C/dt = β_C x_C − α_C x_C; dx_E/dt = β_E x_E − α_E x_E; dy/dt = γ y (λ − y) − δ x_C y; dw/dt = δ x_C y − C_C − C_E.
+- Ec. (4): C_C = min(1, w/w_th) s x_C y C_E = min(1, w/w_th) κ s x_E.
+- Ec. (5): w_th = ρ x_C + κ ρ x_E.
+- Ec. (6): α_C = α_m + max(0, 1 − C_C/(s x_C)) (α_M − α_m) y α_E = α_m + max(0, 1 − C_E/(s x_E)) (α_M − α_m).
 
-La numeración de las ecuaciones del paper original está pendiente de verificar contra el PDF (`[VERIFICAR]`, ver `docs/DECISIONES.md`, D-02).
+Los parámetros de la Tabla 1 del paper (β = 0.03, α_m = 0.01, α_M = 0.07, s = 5·10⁻⁴, ρ = 5·10⁻³, γ = 0.01, λ = 100) coinciden con los que usamos. Como comprobación independiente, la Ec. (10) da δ\* = 2ηs/λ = 6.67·10⁻⁶ con η = (α_M − β_C)/(α_M − α_m) = 2/3, y la Ec. (11) una capacidad de carga máxima χ_M = 75 000; nuestro simulador converge exactamente a ese equilibrio (y\* = λ/2 = 50).
 
-Con δ_opt = 6.67·10⁻⁶ el sistema converge al equilibrio analítico y* = λ/2 = 50 y x_C* = γ(λ − y*)/δ = 75 000, lo que usamos como prueba de la implementación. Reproducimos de forma cualitativa el equilibrio, las oscilaciones amortiguadas, los ciclos de colapso y el colapso irreversible por desigualdad (Figura 1). **No** logramos reproducir el colapso irreversible de la naturaleza a 5.5·δ_opt: en nuestra implementación la naturaleza se recupera y el sistema cicla.
+**Un error encontrado al verificar.** En la primera versión escribimos α_E con κ en el denominador, de modo que élites y plebeyos compartían el mismo término de hambruna. El paper usa s x_E (sin κ): las élites solo sufren hambruna cuando w/w_th ≤ 1/κ. Lo corregimos (con un test unitario) y regeneramos todo el dataset y los resultados; los números de una versión previa de este documento quedaron obsoletos.
 
-![Escenarios canónicos de HANDY reproducidos con el simulador.](report/figures/fig_escenarios_handy.png)
+**Escenarios del paper reproducidos (Figura 1).** Equilibrio (1×δ\*), oscilaciones amortiguadas (2.5×δ\*), ciclos de colapso reversibles (4×δ\*), colapso Tipo-L (κ = 100 con una semilla minúscula de élites: la población muere pero la naturaleza se recupera), colapso Tipo-N irreversible (κ = 100, δ = 10⁻⁴) y el caso equitativo (κ = 1, x_E(0) = 25).
+
+**Lo que reproducimos solo a medias: el umbral del Tipo-N igualitario.** El paper reporta que 4×δ\* es reversible y 5.5×δ\* irreversible, usando Euler con paso de 1 año y precisión simple. Con RK4 nuestra naturaleza se recupera hasta ≈ 9.25×δ\*; con Euler (dt = 1) y precisión simple el colapso irreversible aparece desde ≈ 3.25×δ\*. El umbral del paper (entre 4× y 5.5×) queda entre ambos: la irreversibilidad depende de la discretización. Una explicación plausible, que no verificamos por separado, es que con Euler y dt = 1 el paso de la naturaleza se vuelve negativo cuando δ·x_C supera 1 + γλ y se recorta a cero exacto, mientras que en RK4 la naturaleza queda en valores ≈ 10⁻³⁰ desde los que puede regenerarse. Usamos RK4 en el dataset por ser más preciso y mostramos ambos esquemas en la Figura 1.
+
+![Escenarios canónicos de HANDY reproducidos con el simulador (RK4, salvo el panel inferior izquierdo: Euler, dt = 1 año, precisión simple).](report/figures/fig_escenarios_handy.png)
 
 ## 2.2 Extensiones y factores
 
-Se extendió el modelo con temperatura (reduce la regeneración y sube la mortalidad base), agua (limita la capacidad de carga según la demanda de la población) y eventos extremos (proceso de Poisson que destruye fracciones aleatorias de naturaleza y riqueza). El resultado son 11 factores, cada uno marcado como accionable o no accionable (Tabla 1). Los accionables serán los únicos que puedan modificarse en los contrafactuales de la Fase 2.
+Se extendió el modelo con temperatura (reduce la regeneración y sube la mortalidad base), agua (limita la capacidad de carga según la demanda de la población) y eventos extremos (proceso de Poisson que destruye fracciones aleatorias de naturaleza y riqueza). El resultado son 11 factores, cada uno marcado como accionable o no accionable (Tabla 1). Los accionables son los únicos que pueden modificarse en los contrafactuales.
 
-[[tabla: Factores del simulador y su carácter accionable.]]
+[[tabla: Factores del simulador, rango muestreado y carácter accionable.]]
 <<TABLE factors>>
 
 ## 2.3 Definición de colapso y supervivencia
@@ -29,7 +32,7 @@ Un planeta **colapsa** en el primer año en que su población total cae por deba
 
 ## 2.4 Estocasticidad y probabilidad verdadera
 
-Por los eventos de Poisson, las mismas condiciones iniciales pueden dar resultados distintos. Para 500 planetas de test corrimos 32 réplicas con semillas de eventos distintas y obtuvimos la probabilidad verdadera P(sobrevive | parámetros), con resolución de 1/32. Esa cantidad sirve para evaluar la calibración y, en la Fase 2, como verdad de referencia para XAI. Un hallazgo importante del análisis: solo el {e[mc_share_intermediate]:.1%} de esos planetas tiene una probabilidad entre 0.05 y 0.95; **el resultado es mayormente determinista dados los parámetros**, y eso limita cuánto puede aportar observar la trayectoria.
+Por los eventos de Poisson, las mismas condiciones iniciales pueden dar resultados distintos. Para 500 planetas de test corrimos 32 réplicas con semillas de eventos distintas y obtuvimos la probabilidad verdadera P(sobrevive | parámetros), con resolución de 1/32. Esa cantidad sirve para evaluar la calibración y como verdad de referencia para XAI. En el subconjunto Monte Carlo el {e[mc_share_intermediate]:.1%} de los planetas tiene una probabilidad entre 0.05 y 0.95: el resultado es en buena parte determinista dados los parámetros, pero hay una fracción importante de casos genuinamente inciertos.
 
 ## 2.5 Análisis exploratorio
 

@@ -9,6 +9,8 @@ STAGES = [
     ["-m", "worldsim.train.run_task_a", "--config", "configs/task_a.yaml"],
     ["-m", "worldsim.train.run_task_b", "--config", "configs/task_b.yaml"],
     ["-m", "worldsim.xai.run_xai", "--config", "configs/xai.yaml"],
+    ["-m", "worldsim.xai.run_fidelity", "--config", "configs/fidelity.yaml"],
+    ["-m", "worldsim.xai.run_counterfactuals", "--config", "configs/counterfactual.yaml"],
     ["scripts/build_notebooks.py"],
 ]
 

@@ -20,8 +20,8 @@ NB["01_simulador_validacion"] = [
     ("code", SETUP),
     ("code", "from pathlib import Path\nfrom worldsim.simulator.scenarios import plot_scenarios\nsummary = plot_scenarios(Path('report/figures/fig_escenarios_handy.png'))\n"
              "display(pd.DataFrame(summary).T)\ndisplay(Image('report/figures/fig_escenarios_handy.png'))"),
-    ("md", "**Lectura.** Equilibrio, oscilaciones amortiguadas, ciclos de colapso y colapso irreversible por desigualdad se reproducen. "
-           "**No** logramos un colapso irreversible de la *naturaleza* (Tipo-N) a 5.5×δ_opt: en nuestra implementación la naturaleza se recupera y el sistema cicla (ver D-03)."),
+    ("md", "**Lectura.** Se reproducen el equilibrio, las oscilaciones, los ciclos de colapso, el colapso Tipo-L (la población muere, la naturaleza se recupera) y el Tipo-N con κ=100. "
+           "El umbral del Tipo-N *igualitario* depende del integrador: RK4 desde ≈9.25×δ*, Euler (dt=1, float32, como el paper) desde ≈3.25×δ*; el paper reporta 4× reversible y 5.5× irreversible, entre ambos (ver D-03)."),
     ("code", "import subprocess\nprint(subprocess.run([sys.executable, '-m', 'pytest', '-q'], capture_output=True, text=True).stdout[-300:])"),
 ]
 NB["02_dataset_eda"] = [
@@ -41,14 +41,31 @@ NB["02_dataset_eda"] = [
 ]
 NB["03_models"] = [
     ("md", "# 03 · Modelos\nTarea (a): MLP vs. regresión logística y LightGBM (S1, S8). Tarea (b): LSTM de alerta temprana (S3) vs. baselines. "
-           "Entrenamiento: `python -m worldsim.train.run_task_a` y `python -m worldsim.train.run_task_b`."),
+           "Entrenamiento: `python -m worldsim.train.run_task_a` y `python -m worldsim.train.run_task_b`. Resultados: media ± desviación sobre 5 semillas."),
     ("code", SETUP),
     ("md", "## Tarea (a): condiciones iniciales → supervivencia (test, 7 500 planetas)"),
-    ("code", "import json\nfrom worldsim.reporting import task_a_tables, task_b_tables\nta = task_a_tables(); display(ta)\n"
-             "r = json.load(open('outputs/task_a/results.json')); print('mejores hiperparámetros MLP:', r['best_hp'])\n"
+    ("code", "import json\nfrom worldsim.reporting import task_a_tables, task_a_bootstrap, task_b_tables, task_b_bootstrap, lstm_search_table\nta = task_a_tables(); display(ta)\n"
+             "r = json.load(open('outputs/task_a/results.json')); print('semillas:', r['seeds'], '| mejores hiperparámetros MLP:', r['best_hp'])\n"
+             "print('Diferencias pareadas (bootstrap, test, semilla 0):'); display(task_a_bootstrap())\n"
              "display(pd.DataFrame(r['trials']).sort_values('val_bce').head(5))\ndisplay(Image('report/figures/fig_tarea_a_calibracion.png'))"),
     ("md", "## Tarea (b): primeros k% de la trayectoria → supervivencia\nSolo se evalúan planetas aún vivos al final de la ventana; se reporta cuántos quedan fuera."),
     ("code", "auc, brier, excl = task_b_tables()\nprint('ROC-AUC'); display(auc); print('Brier'); display(brier); print('Planetas excluidos (ya colapsados en la ventana)'); display(excl)\ndisplay(Image('report/figures/fig_tarea_b_curva_k.png'))"),
+    ("md", "### Diferencias pareadas con IC 95 % (bootstrap sobre los planetas de test, semilla 0) y búsqueda de hiperparámetros de la LSTM"),
+    ("code", "display(task_b_bootstrap()); display(lstm_search_table())"),
+]
+NB["05_fidelidad_contrafactuales"] = [
+    ("md", "# 05 · Fidelidad de las explicaciones y contrafactuales\nComparamos las atribuciones con el efecto de **intervenir cada factor** en el modelo y en el simulador "
+           "(`python -m worldsim.xai.run_fidelity`) y validamos contrafactuales con el simulador (`python -m worldsim.xai.run_counterfactuals`)."),
+    ("code", SETUP),
+    ("code", "import json\nfrom worldsim.reporting_phase2 import fidelity_table, fidelity_figs, cf_table, cf_figs\nsanity = fidelity_figs()\ndisplay(fidelity_table())"),
+    ("code", "display(Image('report/figures/fig_fidelidad_spearman.png')); display(Image('report/figures/fig_fidelidad_global.png'))"),
+    ("md", "## Curvas de eliminación y dispersión"),
+    ("code", "display(Image('report/figures/fig_fidelidad_eliminacion.png')); display(Image('report/figures/fig_fidelidad_dispersion.png', width=480))"),
+    ("md", "## Prueba de cordura (pesos aleatorizados, Adebayo et al., 2018)"),
+    ("code", "print('Spearman medio entre SHAP del modelo entrenado y del aleatorizado:', round(sanity['mean_spearman_trained_vs_randomised'], 3))\n"
+             "print('Spearman vs. simulador — modelo entrenado:', round(sanity['vs_simulator_trained']['spearman'], 3), '| modelo aleatorizado:', round(sanity['vs_simulator_randomised']['spearman'], 3))"),
+    ("md", "## Contrafactuales sobre palancas accionables, verificados con el simulador"),
+    ("code", "share = cf_figs(); display(cf_table()); print('fracción de contrafactuales que modifican cada palanca:', {k: round(v, 2) for k, v in share.items()})\ndisplay(Image('report/figures/fig_contrafactuales.png'))"),
 ]
 NB["04_xai"] = [
     ("md", "# 04 · XAI: atribuciones sobre el MLP de la tarea (a)\nBaseline único para todos los métodos: el planeta medio de train (vector cero estandarizado; log para δ y κ). "

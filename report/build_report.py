@@ -170,39 +170,70 @@ def md_table(rows):
     return "\n".join(out)
 
 
+def df_md(df, index=False):
+    d = df.reset_index() if index else df
+    return md_table([[str(c) for c in d.columns]] + [[str(v) for v in r] for r in d.values.tolist()])
+
+
 def build_context():
     import yaml
     from worldsim.data.dataset import load_worlds
-    from worldsim.reporting import LABELS, eda, xai_summary
+    from worldsim.reporting import (LABELS, eda, lstm_search_table, task_a_bootstrap, task_a_tables, task_b_bootstrap, task_b_tables,
+                                    xai_summary)
+    from worldsim.reporting_phase2 import cf_figs, cf_table, fidelity_figs, fidelity_table
     from worldsim.simulator.factors import FACTORS
 
     ta = json.load(open(ROOT / "outputs/task_a/results.json"))
     tb = json.load(open(ROOT / "outputs/task_b/results.json"))
     xc = json.load(open(ROOT / "outputs/xai/checks.json"))["checks"]
-    ctx = dict(a=ta["results"], n_test=ta["n_test"], b={int(k): v for k, v in tb["results"].items()},
+    fd = json.load(open(ROOT / "outputs/fidelity/results.json"))
+    cf = json.load(open(ROOT / "outputs/counterfactuals/results.json"))
+    ctx = dict(a=ta["results"], sa=ta["std"], ba=ta["bootstrap"]["pairs"], n_test=ta["n_test"], n_seeds=len(ta["seeds"]),
+               b={int(k): v for k, v in tb["results"].items()}, sb={int(k): v for k, v in tb["std"].items()},
+               bb={int(k): v["pairs"] for k, v in tb["bootstrap"].items()}, hp_b=tb["best_hp"], cf=cf,
                e=eda(load_worlds(ROOT / "data/worlds.npz")), x=xc)
     xs = xai_summary(str(ROOT / "outputs/xai/attributions.npz"))
     ctx["g"], ctx["act"] = xs["agreement"], xs["actionable_share"]
+    sanity = fidelity_figs(str(ROOT / "outputs/fidelity/results.json"), str(ROOT / "outputs/fidelity/arrays.npz"))
+    cf_figs(str(ROOT / "outputs/counterfactuals/results.json"), str(ROOT / "outputs/counterfactuals/arrays.npz"))
+
+    short = {"SHAP (MLP)": "shap", "IG (MLP)": "ig", "TreeSHAP (LightGBM)": "tree"}
+    fx = dict(bd_n=fd["groups"]["boundary"]["n"], mc_n=fd["groups"]["mc"]["n"], rnd_vs_trained=sanity["mean_spearman_trained_vs_randomised"],
+              rnd_sim=sanity["vs_simulator_randomised"]["spearman"], trained_sim=sanity["vs_simulator_trained"]["spearman"],
+              rnd_sign=sanity["vs_simulator_randomised"]["sign_agreement"], trained_sign=sanity["vs_simulator_trained"]["sign_agreement"],
+              thr=fd["thr"])
+    for g, gk in (("mc", "mc"), ("boundary", "bd")):
+        gr = fd["groups"][g]
+        fx[f"{gk}_inter"] = gr["share_planets_true_p_intermediate"]; fx[f"{gk}_ptrue"] = gr["p_true_mean"]
+        for m, mk in short.items():
+            for ref, rk in (("vs_simulator", "sim"), ("vs_model", "mod")):
+                v = gr["methods"][m][ref]
+                for key in ("spearman", "sign_agreement", "top1", "top3_overlap", "n_planets", "share_informative"):
+                    fx[f"{gk}_{mk}_{rk}_{key}"] = v[key]
+                fx[f"{gk}_{mk}_{rk}_lo"], fx[f"{gk}_{mk}_{rk}_hi"] = v["spearman_ci"]
+        for key in ("spearman", "sign_agreement", "top1", "n_planets"):
+            fx[f"{gk}_mlp_vs_sim_{key}"] = gr["model_vs_simulator_effect"][key]
+    for m, mk in short.items():
+        for o, ok in (("attribution", "attr"), ("random", "rand"), ("global_importance", "glob")):
+            fx[f"del_{mk}_{ok}_model"] = fd["deletion"][m][o]["model_auc"]; fx[f"del_{mk}_{ok}_sim"] = fd["deletion"][m][o]["sim_auc"]
+    ctx["fx"] = fx
+    import numpy as np
+    ca = np.load(ROOT / "outputs/counterfactuals/arrays.npz", allow_pickle=True)
+    tc = ca["p_true_before"] < 0.5
+    ctx["cfx"] = dict(disagree=float(((ca["p_model_after_gradient"] >= 0.8 - 1e-3) & (ca["p_true_after_gradient"] < 0.5))[tc].mean()))
 
     rng = yaml.safe_load(open(ROOT / "configs/dataset.yaml", encoding="utf8"))["ranges"]
     fr = [["Factor", "Descripción", "Rango muestreado", "Accionable"]]
     for f in FACTORS:
         lo, hi = rng[f.name]
         fr.append([f"`{f.name}`", f.desc, f"[{lo:g}, {hi:g}]" + (" (log)" if f.log else ""), "Sí" if f.actionable else "No"])
-    t_a = [["Modelo", "ROC-AUC", "PR-AUC", "F1", "Brier", "ECE", "MAE vs P verdadera"]]
-    for k, v in ta["results"].items():
-        t_a.append([LABELS[k], f"{v['roc_auc']:.4f}", f"{v['pr_auc']:.4f}", f"{v['f1']:.4f}", f"{v['brier']:.4f}", f"{v['ece']:.4f}", f"{v['mc_mae']:.4f}"])
-    ks = tb["k_percents"]; names = [n for n in LABELS if n in tb["results"][str(ks[0])]]
-    t_b = [["k"] + [LABELS[n] for n in names]]
-    for k in ks:
-        t_b.append([f"{k}%"] + [f"{tb['results'][str(k)][n]['roc_auc']:.4f}" for n in names])
-    t_e = [["k", "Planetas test", "Evaluados (vivos)", "Excluidos", "Supervivencia entre vivos"]]
-    for k in ks:
-        r = tb["results"][str(k)]
-        t_e.append([f"{k}%", str(r["n_test"]), str(r["n_test_alive"]), str(r["n_excluded"]), f"{r['pos_rate_alive']:.1%}"])
+    ctx["tables"] = dict(factors=md_table(fr), task_a=df_md(task_a_tables()), task_a_boot=df_md(task_a_bootstrap()))
+    auc, brier, excl = task_b_tables()
+    ctx["tables"].update(task_b_auc=df_md(auc, True), task_b_brier=df_md(brier, True), task_b_excl=df_md(excl.round(3), True),
+                         task_b_boot=df_md(task_b_bootstrap(), True), lstm_search=df_md(lstm_search_table().round(4)),
+                         fidelity=df_md(fidelity_table()), cf=df_md(cf_table()))
     imp = xs["importance"]
-    t_x = [["Factor"] + list(imp.columns)] + [[f"`{i}`"] + [f"{v:.3f}" for v in row] for i, row in imp.iterrows()]
-    ctx["tables"] = dict(factors=md_table(fr), task_a=md_table(t_a), task_b_auc=md_table(t_b), task_b_excl=md_table(t_e), xai_importance=md_table(t_x))
+    ctx["tables"]["xai_importance"] = md_table([["Factor"] + list(imp.columns)] + [[f"`{i}`"] + [f"{v:.3f}" for v in row] for i, row in imp.iterrows()])
     return ctx
 
 

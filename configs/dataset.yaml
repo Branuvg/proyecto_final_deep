@@ -10,10 +10,10 @@ split: [0.70, 0.15, 0.15]
 mc_planets: 500       # test planets with Monte Carlo replicates
 mc_replicates: 32
 output: data/worlds.npz
-# Sampling ranges (iteration documented in docs/DECISIONES.md D-06)
+# Sampling ranges (iteration documented in docs/DECISIONES.md D-06; re-tuned after the alpha_E fix, D-02)
 ranges:
-  delta: [5.0e-6, 1.0e-4]
-  kappa: [1.0, 30.0]
+  delta: [5.0e-6, 6.0e-5]
+  kappa: [1.0, 3.0]
   s: [3.5e-4, 6.5e-4]
   water_eff: [0.0, 0.6]
   beta: [0.025, 0.045]
@@ -22,4 +22,4 @@ ranges:
   water: [0.05, 1.2]
   event_rate: [0.0, 0.12]
   event_sev: [0.1, 0.9]
-  elite_frac: [0.0, 0.3]
+  elite_frac: [0.0, 0.1]

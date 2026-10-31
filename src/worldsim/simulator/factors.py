@@ -20,18 +20,19 @@ class Factor:
 
 
 # Order matters: it is the column order of every feature matrix in the project.
+# Ranges here must equal configs/dataset.yaml (checked by tests/test_simulator.py::test_factor_ranges_match_dataset_config).
 FACTORS: tuple[Factor, ...] = (
-    Factor("delta", 4e-6, 4e-5, True, True, "Depletion factor of nature per commoner (HANDY delta)"),
-    Factor("kappa", 1.0, 20.0, True, True, "Inequality: elite consumption multiplier (HANDY kappa)"),
-    Factor("s", 3.5e-4, 6.5e-4, True, False, "Subsistence salary per capita (HANDY s)"),
-    Factor("water_eff", 0.0, 0.6, True, False, "Water-use efficiency: fraction of water demand saved"),
+    Factor("delta", 5e-06, 6e-05, True, True, "Depletion factor of nature per commoner (HANDY delta)"),
+    Factor("kappa", 1, 3, True, True, "Inequality: elite consumption multiplier (HANDY kappa)"),
+    Factor("s", 0.00035, 0.00065, True, False, "Subsistence salary per capita (HANDY s)"),
+    Factor("water_eff", 0, 0.6, True, False, "Water-use efficiency: fraction of water demand saved"),
     Factor("beta", 0.025, 0.045, False, False, "Birth rate, beta_C = beta_E (HANDY beta)"),
-    Factor("gamma", 0.005, 0.02, False, False, "Nature regeneration rate (HANDY gamma)"),
-    Factor("temp", 0.0, 4.0, False, False, "Temperature anomaly in deg C (extension)"),
-    Factor("water", 0.5, 2.5, False, False, "Water supply relative to reference demand (extension)"),
-    Factor("event_rate", 0.0, 0.04, False, False, "Extreme-event rate, events/year (Poisson, extension)"),
-    Factor("event_sev", 0.05, 0.5, False, False, "Extreme-event severity in (0,1) (extension)"),
-    Factor("elite_frac", 0.0, 0.3, False, False, "Initial elite share of the population"),
+    Factor("gamma", 0.004, 0.02, False, False, "Nature regeneration rate (HANDY gamma)"),
+    Factor("temp", 0, 5, False, False, "Temperature anomaly in deg C (extension)"),
+    Factor("water", 0.05, 1.2, False, False, "Water supply relative to reference demand (extension)"),
+    Factor("event_rate", 0, 0.12, False, False, "Extreme-event rate, events/year (Poisson, extension)"),
+    Factor("event_sev", 0.1, 0.9, False, False, "Extreme-event severity in (0,1) (extension)"),
+    Factor("elite_frac", 0, 0.1, False, False, "Initial elite share of the population"),
 )
 NAMES = [f.name for f in FACTORS]
 ACTIONABLE = {f.name: f.actionable for f in FACTORS}

@@ -86,3 +86,44 @@ def test_collapse_definition():
     i = int(r.t_collapse[0] // (6))
     before = pop[: i - 1]
     assert (before >= 0.1 * np.maximum.accumulate(before)).all()   # no collapse before t_collapse
+
+
+def test_elite_famine_uses_kappa():
+    """Eq. (6): alpha_E uses C_E/(s xE) = kappa*min(1,w/wth), so elites starve only when w/wth <= 1/kappa."""
+    from worldsim.simulator.handy import _effective_rates
+    p = {k: np.atleast_1d(np.asarray(v, float)) for k, v in BASELINE.items()}
+    p["kappa"] = np.array([10.0])
+    eff = _effective_rates(p)
+    state = np.array([[100.0, 100.0, 50.0, 0.0]])
+    state[0, W] = 0.5 * CONSTANTS["rho"] * (100 + 10 * 100)          # w/w_th = 0.5: commoners starve, elites (1/kappa=0.1) do not
+    d = derivatives(state, p, eff)
+    assert d[0, XC] / 100 == pytest.approx(p["beta"][0] - (CONSTANTS["alpha_m"] + 0.5 * (CONSTANTS["alpha_M"] - CONSTANTS["alpha_m"])))
+    assert d[0, XE] / 100 == pytest.approx(p["beta"][0] - CONSTANTS["alpha_m"])
+
+
+def test_paper_scenarios_qualitative():
+    """Type-L: nature recovers while population dies; Type-N: nature and population both reach 0 (irreversible)."""
+    D = 6.67e-6
+    L = simulate({**BASELINE, "delta": D, "kappa": 100.0}, SimConfig(horizon=1500), init=dict(xc0=100.0, xe0=1e-3))
+    assert L.collapsed[0] and L.traj[0, -1, XC] < 1.0 and L.traj[0, -1, Y] > 90
+    N = simulate({**BASELINE, "delta": 12 * D}, SimConfig(horizon=1500))
+    assert N.traj[0, -1, Y] < 1e-6 and N.traj[0, -1, XC] < 1.0
+    cyc = simulate({**BASELINE, "delta": 4 * D}, SimConfig(horizon=1500))
+    assert cyc.traj[0, -1, Y] > 1.0 or cyc.traj[0, :, XC].max() > 1e4   # reversible cycles at 4x with RK4
+
+
+def test_euler_close_to_rk4_for_small_dt():
+    p = dict(BASELINE); p.update(delta=1e-5)
+    a = simulate(p, SimConfig(horizon=200, dt=0.05, record_every=100, integrator="euler"))
+    b = simulate(p, SimConfig(horizon=200, dt=1.0, record_every=5, integrator="rk4"))
+    assert np.allclose(a.traj[0, -1], b.traj[0, -1], rtol=2e-2)
+
+
+def test_factor_ranges_match_dataset_config():
+    """The factor registry (used by counterfactuals and the app) must use the same ranges as the dataset."""
+    import pathlib
+    import yaml
+    from worldsim.simulator.factors import FACTORS
+    cfg = yaml.safe_load(open(pathlib.Path(__file__).resolve().parents[1] / "configs/dataset.yaml", encoding="utf8"))["ranges"]
+    for f in FACTORS:
+        assert (f.low, f.high) == pytest.approx(tuple(cfg[f.name])), f.name

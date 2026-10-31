@@ -1,19 +1,20 @@
 """Vectorised HANDY simulator (Motesharrei, Rivas & Kalnay, 2014) with extensions.
 
-Base model (equations as reproduced in Patry et al. 2024, arXiv:2407.14860, Sec. I.1; the
-numbering of the original paper must be checked against the PDF, see docs/DECISIONES.md D-02):
+Base model, equation numbers as in the original paper (Motesharrei et al., 2014, Sec. 3; checked
+against the author-hosted PDF, see docs/DECISIONES.md D-02):
 
-  (a) dxC/dt = beta_C xC - alpha_C xC
-  (b) dxE/dt = beta_E xE - alpha_E xE
-  (c) dy/dt  = gamma y (lam - y) - delta xC y          (regenerative nature)
-  (d) dw/dt  = delta xC y - C_C - C_E
-  consumption  C_C = min(1, w/w_th) s xC ;  C_E = min(1, w/w_th) kappa s xE
-  threshold    w_th = rho xC + kappa rho xE
-  mortality    alpha_C = alpha_m + max(0, 1 - C_C/(s xC)) (alpha_M - alpha_m)
-               alpha_E = alpha_m + max(0, 1 - C_E/(kappa s xE)) (alpha_M - alpha_m)
+  Eq. (3)  dxC/dt = beta_C xC - alpha_C xC ;  dxE/dt = beta_E xE - alpha_E xE
+           dy/dt  = gamma y (lam - y) - delta xC y ;  dw/dt = delta xC y - C_C - C_E
+  Eq. (4)  C_C = min(1, w/w_th) s xC ;  C_E = min(1, w/w_th) kappa s xE
+  Eq. (5)  w_th = rho xC + kappa rho xE
+  Eq. (6)  alpha_C = alpha_m + max(0, 1 - C_C/(s xC)) (alpha_M - alpha_m)
+           alpha_E = alpha_m + max(0, 1 - C_E/(s xE)) (alpha_M - alpha_m)
 
-Because C_E/(kappa s xE) = C_C/(s xC) = min(1, w/w_th), both groups share the same famine term;
-elites differ only through their larger share of w_th and of consumption.
+Note the denominator s*xE (not kappa*s*xE) in alpha_E: C_E/(s xE) = kappa*min(1, w/w_th), so elites only
+starve when w/w_th <= 1/kappa (paper, Fig. 2b). The two groups therefore have different death rates.
+
+Integrators: "rk4" (default, accurate) and "euler" (+ float32), which is what the paper used
+(Euler, dt = 1 year, single precision) and is needed to replicate its irreversible Type-N collapse.
 
 Extensions (all switched off by BASELINE): temperature, water, Poisson extreme events.
 State layout: (N, 4) = [commoners, elites, nature, wealth]; N planets integrated in one batch.
@@ -34,6 +35,8 @@ class SimConfig:
     horizon: int = 600          # years
     dt: float = 1.0             # RK4 step, years
     record_every: int = 6       # store one point every `record_every` steps
+    integrator: str = "rk4"     # "rk4" or "euler" (paper replication)
+    dtype: str = "float64"      # "float32" reproduces the paper's single precision
     collapse_frac: float = 0.1  # collapse if P < collapse_frac * running max of P ...
     floor_frac: float = 0.2     # ... or P < floor_frac * P(0) (slow decline from the start)
     seed: int = 0
@@ -67,12 +70,12 @@ def derivatives(state: np.ndarray, p: dict[str, np.ndarray], eff: dict[str, np.n
     w_th = rho * (xc + kappa * xe)                                   # w_th
     fed = np.minimum(1.0, w / np.maximum(w_th, 1e-12))               # min(1, w/w_th)
     cc, ce = fed * s * xc, fed * kappa * s * xe                      # C_C, C_E
-    famine = np.maximum(0.0, 1.0 - fed)
-    a_c = eff["alpha_m"] + famine * (aM - eff["alpha_m"])            # alpha_C (= alpha_E, see module doc)
+    a_c = eff["alpha_m"] + np.maximum(0.0, 1.0 - fed) * (aM - eff["alpha_m"])            # alpha_C, Eq. (6)
+    a_e = eff["alpha_m"] + np.maximum(0.0, 1.0 - kappa * fed) * (aM - eff["alpha_m"])    # alpha_E, Eq. (6)
 
     d = np.empty_like(state)
     d[:, XC] = (p["beta"] - a_c) * xc
-    d[:, XE] = (p["beta"] - a_c) * xe
+    d[:, XE] = (p["beta"] - a_e) * xe
     d[:, Y] = eff["gamma"] * y * (lam_eff - y) - p["delta"] * xc * y
     d[:, W] = p["delta"] * xc * y - cc - ce
     return d
@@ -95,24 +98,35 @@ def rk4_step(state, p, eff, dt):
     return state + dt * (k1 + 2 * k2 + 2 * k3 + k4) / 6.0
 
 
-def simulate(params: dict, cfg: SimConfig | None = None) -> SimResult:
-    """Simulate a batch of planets. `params` maps each factor name to a scalar or an (N,) array."""
+def euler_step(state, p, eff, dt):
+    return state + dt * derivatives(state, p, eff)
+
+
+def simulate(params: dict, cfg: SimConfig | None = None, init: dict | None = None) -> SimResult:
+    """Simulate a batch of planets. `params` maps each factor name to a scalar or an (N,) array.
+    `init` optionally overrides the initial populations with absolute values {"xc0": ..., "xe0": ...}
+    (used to replicate the paper's scenarios, e.g. xC(0)=100, xE(0)=0.2)."""
     cfg = cfg or SimConfig()
     p = _as_arrays(params)
+    dt_ = np.dtype(cfg.dtype)
+    p = {k: v.astype(dt_) for k, v in p.items()}
     n = len(p["delta"])
     rng = np.random.default_rng(cfg.seed)
     eff = _effective_rates(p)
 
     pop0 = CONSTANTS["pop0"]
-    state = np.zeros((n, 4))
+    state = np.zeros((n, 4), dtype=dt_)
     state[:, XE] = pop0 * p["elite_frac"]
     state[:, XC] = pop0 - state[:, XE]
+    if init is not None:
+        state[:, XC], state[:, XE] = init["xc0"], init["xe0"]
+        pop0 = float((state[:, XC] + state[:, XE]).mean())
     state[:, Y] = CONSTANTS["lam"]   # nature starts at capacity
     state[:, W] = 0.0                # no accumulated wealth
 
     n_steps = int(round(cfg.horizon / cfg.dt))
     n_rec = n_steps // cfg.record_every + 1
-    traj = np.empty((n, n_rec, 4)); traj[:, 0] = state
+    traj = np.empty((n, n_rec, 4), dtype=dt_); traj[:, 0] = state
     events = np.zeros((n, n_rec), dtype=np.int16)
     pop_max = state[:, XC] + state[:, XE]
     collapsed = np.zeros(n, bool)
@@ -120,7 +134,7 @@ def simulate(params: dict, cfg: SimConfig | None = None) -> SimResult:
     ev_acc = np.zeros(n, dtype=np.int16)
 
     for i in range(1, n_steps + 1):
-        state = rk4_step(state, p, eff, cfg.dt)
+        state = (rk4_step if cfg.integrator == "rk4" else euler_step)(state, p, eff, cfg.dt)
         # Extreme events: Poisson(rate*dt) arrivals; each destroys random fractions of nature and wealth.
         n_ev = rng.poisson(p["event_rate"] * cfg.dt)
         if n_ev.any():

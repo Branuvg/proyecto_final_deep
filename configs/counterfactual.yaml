@@ -1,0 +1,10 @@
+seed: 2026
+data: data/worlds.npz
+task_a_dir: outputs/task_a
+xai_dir: outputs/xai
+out_dir: outputs/counterfactuals
+R: 64            # Monte Carlo replicates used to validate every counterfactual in the simulator
+target_p: 0.8    # model survival probability required of a counterfactual
+lam: 0.5         # weight of the L1 proximity penalty
+steps: 600
+lr: 0.03

@@ -1,0 +1,10 @@
+seed: 2026
+data: data/worlds.npz
+task_a_dir: outputs/task_a
+xai_dir: outputs/xai
+out_dir: outputs/fidelity
+n_boundary: 1000        # extra test planets whose model P(survive) is in (0.05, 0.95)
+R: 64                   # Monte Carlo replicates per planet for single-factor effects
+R_deletion: 32          # replicates for simulator deletion curves
+effect_thr: 0.10        # |change in true P(survive)| considered a real effect
+effect_thr_logit: 0.25  # same notion for model effects (logit units)

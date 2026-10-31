@@ -1,6 +1,16 @@
-seed: 2026
+seeds: [2026, 2027, 2028, 2029, 2030]   # seeds[0] is the "main" model
 data: data/worlds.npz
 out_dir: outputs/task_b
 task_a_dir: outputs/task_a
+bootstrap: 1000
+# defaults; the random search overrides hidden/layers/dropout/lr/weight_decay
 lstm: {hidden: 128, layers: 1, dropout: 0.1, lr: 0.002, weight_decay: 0.01, batch_size: 512, max_epochs: 120, patience: 12, m_max_train: 70}
+search:
+  n_trials: 8
+  space:
+    hidden: [64, 128, 256]
+    layers: [1, 2]
+    dropout: [0.0, 0.1, 0.2]
+    lr: [0.001, 0.002, 0.003]
+    weight_decay: [0.001, 0.01, 0.1]
 lgbm: {n_estimators: 1000, learning_rate: 0.05, num_leaves: 31, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.9}

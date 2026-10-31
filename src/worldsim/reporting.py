@@ -19,9 +19,11 @@ LABELS = {"logistic": "Regresión logística", "lightgbm": "LightGBM", "mlp": "M
           "mlp_static_only": "MLP solo parámetros (tarea a)"}
 
 
-def _save(fig, name):
+def _save(fig, name, tight=True):
     FIG.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout(); fig.savefig(FIG / name, dpi=130); plt.close(fig)
+    if tight:
+        fig.tight_layout()
+    fig.savefig(FIG / name, dpi=130); plt.close(fig)
 
 
 # ---------------------------------------------------------------- EDA
@@ -72,18 +74,23 @@ def _traj_ax(ax, w, i, title):
 
 
 # ---------------------------------------------------------------- Task (a)
+def _pm(m, s, nd=3):
+    return f"{m:.{nd}f} ± {s:.{nd}f}"
+
+
 def task_a_tables(res_path="outputs/task_a/results.json", pred_path="outputs/task_a/preds_test.npz") -> pd.DataFrame:
-    r = json.load(open(res_path))["results"]; p = np.load(pred_path)
+    d = json.load(open(res_path)); r, sd = d["results"], d["std"]; p = np.load(pred_path)
     rows = []
     for k, v in r.items():
-        rows.append({"Modelo": LABELS[k], "ROC-AUC": v["roc_auc"], "PR-AUC": v["pr_auc"], "F1": v["f1"], "Brier": v["brier"],
-                     "ECE": v["ece"], "MAE vs P_verdadera (MC)": v["mc_mae"]})
+        s = sd[k]
+        rows.append({"Modelo": LABELS[k], "ROC-AUC": _pm(v["roc_auc"], s["roc_auc"]), "PR-AUC": _pm(v["pr_auc"], s["pr_auc"]), "F1": _pm(v["f1"], s["f1"]),
+                     "Brier": _pm(v["brier"], s["brier"], 4), "ECE": _pm(v["ece"], s["ece"], 4), "MAE vs P_verdadera (MC)": _pm(v["mc_mae"], s["mc_mae"], 4)})
     df = pd.DataFrame(rows)
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.3))
     ax[0].plot([0, 1], [0, 1], "k:")
     for k, v in r.items():
         ax[0].plot(v["calibration"]["pred"], v["calibration"]["true"], "o-", label=LABELS[k])
-    ax[0].set_xlabel("Probabilidad predicha"); ax[0].set_ylabel("Frecuencia observada"); ax[0].set_title("Curva de calibración (test)")
+    ax[0].set_xlabel("Probabilidad predicha"); ax[0].set_ylabel("Frecuencia observada"); ax[0].set_title("Curva de calibración (test, semilla 0)")
     ax[0].legend(fontsize=8)
     pt = p["mc_p_true"]
     for k in ("logistic", "lightgbm", "mlp"):
@@ -94,26 +101,50 @@ def task_a_tables(res_path="outputs/task_a/results.json", pred_path="outputs/tas
     return df
 
 
+def task_a_bootstrap(res_path="outputs/task_a/results.json") -> pd.DataFrame:
+    """Paired bootstrap 95% CIs for the differences between models (seed 0, test set)."""
+    b = json.load(open(res_path))["bootstrap"]["pairs"]; names = {"mlp_minus_lightgbm": "MLP − LightGBM", "mlp_minus_logistic": "MLP − logística"}
+    return pd.DataFrame([{"Comparación": names[k], "Δ ROC-AUC [IC 95 %]": f"{v['roc_auc'][1]:+.4f} [{v['roc_auc'][0]:+.4f}, {v['roc_auc'][2]:+.4f}]",
+                          "Δ Brier [IC 95 %]": f"{v['brier'][1]:+.4f} [{v['brier'][0]:+.4f}, {v['brier'][2]:+.4f}]"} for k, v in b.items()])
+
+
 # ---------------------------------------------------------------- Task (b)
 def task_b_tables(res_path="outputs/task_b/results.json"):
-    d = json.load(open(res_path)); R = d["results"]; ks = d["k_percents"]
+    d = json.load(open(res_path)); R, S = d["results"], d["std"]; ks = d["k_percents"]
     names = [n for n in LABELS if n in R[str(ks[0])]]
-    auc = pd.DataFrame({LABELS[n]: [R[str(k)][n]["roc_auc"] for k in ks] for n in names}, index=[f"{k}%" for k in ks])
-    brier = pd.DataFrame({LABELS[n]: [R[str(k)][n]["brier"] for k in ks] for n in names}, index=[f"{k}%" for k in ks])
+    idx = [f"{k}%" for k in ks]
+    auc = pd.DataFrame({LABELS[n]: [_pm(R[str(k)][n]["roc_auc"], S[str(k)][n]["roc_auc"]) for k in ks] for n in names}, index=idx)
+    brier = pd.DataFrame({LABELS[n]: [_pm(R[str(k)][n]["brier"], S[str(k)][n]["brier"], 4) for k in ks] for n in names}, index=idx)
     excl = pd.DataFrame({"Planetas test": [R[str(k)]["n_test"] for k in ks], "Evaluados (vivos)": [R[str(k)]["n_test_alive"] for k in ks],
-                         "Excluidos": [R[str(k)]["n_excluded"] for k in ks], "Supervivencia entre vivos": [R[str(k)]["pos_rate_alive"] for k in ks]},
-                        index=[f"{k}%" for k in ks])
+                         "Excluidos": [R[str(k)]["n_excluded"] for k in ks], "Supervivencia entre vivos": [R[str(k)]["pos_rate_alive"] for k in ks]}, index=idx)
     fig, ax = plt.subplots(1, 2, figsize=(12, 4.3))
     for n in names:
-        ax[0].plot(ks, [R[str(k)][n]["roc_auc"] for k in ks], "o-", label=LABELS[n])
-        ax[1].plot(ks, [R[str(k)][n]["brier"] for k in ks], "o-", label=LABELS[n])
-    ax[0].set_ylabel("ROC-AUC"); ax[1].set_ylabel("Brier"); ax[0].set_title("Desempeño vs. porcentaje de trayectoria observada")
+        ax[0].errorbar(ks, [R[str(k)][n]["roc_auc"] for k in ks], yerr=[S[str(k)][n]["roc_auc"] for k in ks], fmt="o-", capsize=2, label=LABELS[n])
+        ax[1].errorbar(ks, [R[str(k)][n]["brier"] for k in ks], yerr=[S[str(k)][n]["brier"] for k in ks], fmt="o-", capsize=2, label=LABELS[n])
+    ax[0].set_ylabel("ROC-AUC"); ax[1].set_ylabel("Brier"); ax[0].set_title(f"Desempeño vs. % de trayectoria observada (media ± desv., {len(d['seeds'])} semillas)")
     ax[1].set_title("Brier (menor es mejor)")
     for a in ax:
         a.set_xlabel("k (% del horizonte observado)")
     ax[0].legend(fontsize=7)
     _save(fig, "fig_tarea_b_curva_k.png")
     return auc, brier, excl
+
+
+def task_b_bootstrap(res_path="outputs/task_b/results.json") -> pd.DataFrame:
+    d = json.load(open(res_path)); B = d["bootstrap"]; rows = []
+    lab = {"lstm_minus_lightgbm_summary": "LSTM − LightGBM (resumen)", "lstm_minus_mlp_static_only": "LSTM − MLP solo parámetros",
+           "lstm_minus_lstm_no_static": "LSTM − LSTM sin parámetros", "lstm_minus_mlp_window": "LSTM − MLP ventana"}
+    for k in d["k_percents"]:
+        row = {"k": f"{k}%"}
+        for key, name in lab.items():
+            v = B[str(k)]["pairs"][key]["roc_auc"]; row[name] = f"{v[1]:+.4f} [{v[0]:+.4f}, {v[2]:+.4f}]"
+        rows.append(row)
+    return pd.DataFrame(rows).set_index("k")
+
+
+def lstm_search_table(res_path="outputs/task_b/results.json") -> pd.DataFrame:
+    d = json.load(open(res_path))
+    return pd.DataFrame([{**t["hp"], "BCE val": t["val_bce"], "épocas": t["epochs"]} for t in d["trials"]]).sort_values("BCE val")
 
 
 # ---------------------------------------------------------------- XAI

@@ -1,9 +1,10 @@
-seed: 2026
+seeds: [2026, 2027, 2028, 2029, 2030]   # seeds[0] is the "main" model used by XAI/fidelity
 data: data/worlds.npz
 out_dir: outputs/task_a
 batch_size: 512
 max_epochs: 200
 patience: 15
+bootstrap: 1000
 lgbm: {n_estimators: 1000, learning_rate: 0.05, num_leaves: 31, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.9}
 search:
   n_trials: 12

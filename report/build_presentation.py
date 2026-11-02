@@ -23,7 +23,7 @@ from pptx.util import Inches, Pt
 ROOT = Path(__file__).resolve().parents[1]
 FIG = ROOT / "report/figures"
 NAVY, GRAY, LIGHT = RGBColor(0x1F, 0x2A, 0x44), RGBColor(0x55, 0x5B, 0x6B), RGBColor(0xF1, 0xF3, 0xF8)
-SPEAKER = {"David": RGBColor(0x2F, 0x6F, 0xDE), "Jonathan": RGBColor(0x2E, 0x9D, 0x63), "Gabriel": RGBColor(0xE8, 0x83, 0x3A)}
+ACCENT = RGBColor(0x2F, 0x6F, 0xDE)  # one colour for the whole deck (who speaks is in the notes and the video script)
 TITLE = "Simulador de mundos habitables: predicción de supervivencia con modelos sustitutos y explicabilidad verificable"
 
 
@@ -103,9 +103,8 @@ def table(slide, rows, left, top, width, height, size=13):
 
 def new_slide(prs, n, title, who, notes):
     s = prs.slides.add_slide(prs.slide_layouts[6])
-    bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, Inches(0.14)); bar.fill.solid(); bar.fill.fore_color.rgb = SPEAKER[who]; bar.line.fill.background()
-    text(s, title, 0.55, 0.3, 10.2, 0.9, size=28, bold=True)
-    chip = box(s, f"Habla: {who}", 10.9, 0.38, 2.0, 0.45, fill=SPEAKER[who], color=RGBColor(255, 255, 255), size=14, bold=True)
+    bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, Inches(0.14)); bar.fill.solid(); bar.fill.fore_color.rgb = ACCENT; bar.line.fill.background()
+    text(s, title, 0.55, 0.3, 12.2, 0.9, size=28, bold=True)
     text(s, "Deep Learning · UVG · Proyecto final", 0.55, 7.05, 6, 0.3, size=10, color=GRAY)
     text(s, f"{n} / 10", 11.9, 7.05, 1.0, 0.3, size=10, color=GRAY, align=PP_ALIGN.RIGHT)
     s.notes_slide.notes_text_frame.text = f"[{who}]\n{notes}"
@@ -129,19 +128,17 @@ def build():
     sl = []
 
     # 1 ---------------------------------------------------------------------------------------------
-    notes = ("Buenas tardes. Somos David Domínguez, Jonathan Díaz y Gabriel Bran, y les presentamos nuestro proyecto final de Deep Learning. "
+    notes = ("Buenas tardes. Somos Gabriel Bran, David Domínguez y Jonathan Díaz, y les presentamos nuestro proyecto final de Deep Learning. "
              "Empezamos con una pregunta: cuando una red neuronal nos da una explicación de su predicción, ¿podemos creerle? "
              "En casi todos los problemas reales no hay forma de comprobarlo. Nosotros construimos un problema donde sí: un simulador de civilizaciones, "
              "una red que predice si cada civilización sobrevive, y explicaciones que comprobamos contra el propio simulador. "
-             "Yo, David, presento el problema y el simulador; Jonathan, los datos y los modelos; Gabriel, las explicaciones y su verificación; y cierro con las conclusiones.")
-    s = new_slide(prs, 1, "Simulador de mundos habitables", "David", notes)
+             "Yo, Gabriel, presento el problema y el simulador, y cierro con las conclusiones; David presenta los datos y los modelos; y Jonathan, las explicaciones y su verificación.")
+    s = new_slide(prs, 1, "Simulador de mundos habitables", "Gabriel", notes)
     text(s, "Predicción de supervivencia con modelos sustitutos y explicabilidad verificable", 0.55, 1.35, 11.5, 0.9, size=22, color=GRAY)
     box(s, "¿Podemos creerle a una explicación?", 0.55, 2.7, 12.2, 1.3, fill=NAVY, color=RGBColor(255, 255, 255), size=34, bold=True)
-    text(s, "David Domínguez · Jonathan Díaz · Gabriel Bran", 0.55, 4.5, 12, 0.5, size=22)
+    text(s, "Gabriel Bran · David Domínguez · Jonathan Díaz", 0.55, 4.5, 12, 0.5, size=22)
     text(s, "Deep Learning · Sección 10 · Universidad del Valle de Guatemala · 2 de noviembre de 2026", 0.55, 5.1, 12, 0.5, size=16, color=GRAY)
-    for i, (who, what) in enumerate((("David", "problema y simulador"), ("Jonathan", "datos y modelos"), ("Gabriel", "explicaciones y verificación"))):
-        box(s, f"{who}: {what}", 0.55 + i * 4.15, 6.0, 3.95, 0.6, fill=SPEAKER[who], color=RGBColor(255, 255, 255), size=14, bold=True)
-    sl.append((1, "David", "Portada y pregunta central", notes))
+    sl.append((1, "Gabriel", "Portada y pregunta central", notes))
 
     # 2 ---------------------------------------------------------------------------------------------
     notes = ("Muchos sistemas científicos —clima, epidemias, ecología— se estudian con simuladores que son lentos y caros. "
@@ -150,19 +147,19 @@ def build():
              "Pero casi nunca existe una explicación verdadera con la cual compararlas, así que no sabemos si son correctas o solo convincentes. "
              "Nuestra idea: usar un problema donde el mecanismo real sí está disponible. El simulador nos deja intervenir un factor y ver qué pasa de verdad. "
              "Entonces la pregunta del proyecto no es solo predecir, sino medir qué tan fieles son las explicaciones.")
-    s = new_slide(prs, 2, "El problema: sustitutos que no sabemos explicar", "David", notes)
+    s = new_slide(prs, 2, "El problema: sustitutos que no sabemos explicar", "Gabriel", notes)
     bullets(s, ["Los simuladores científicos son caros: se usan redes como modelos sustitutos (surrogates).",
                 "Las explicaciones (SHAP, IG, contrafactuales) casi nunca tienen una verdad de referencia.",
                 "Aquí sí: el simulador es el mecanismo real, así que podemos intervenir y comprobar."], 0.55, 1.35, 12.2, 2.0, size=20)
     y0 = 3.75
-    box(s, "Simulador HANDY\n(mecanismo real)", 0.6, y0, 2.6, 1.2, fill=LIGHT, size=15, bold=True, line=SPEAKER["David"])
+    box(s, "Simulador HANDY\n(mecanismo real)", 0.6, y0, 2.6, 1.2, fill=LIGHT, size=15, bold=True, line=ACCENT)
     arrow(s, 3.3, y0 + 0.4, 0.8); text(s, "50 000 planetas", 3.2, y0 + 0.82, 1.2, 0.3, size=10, color=GRAY)
-    box(s, "Red sustituta\n(MLP / LSTM)", 4.2, y0, 2.6, 1.2, fill=LIGHT, size=15, bold=True, line=SPEAKER["David"])
+    box(s, "Red sustituta\n(MLP / LSTM)", 4.2, y0, 2.6, 1.2, fill=LIGHT, size=15, bold=True, line=ACCENT)
     arrow(s, 6.9, y0 + 0.4, 0.8); text(s, "predicción", 6.9, y0 + 0.82, 1.0, 0.3, size=10, color=GRAY)
-    box(s, "Explicación\n(SHAP · IG · contrafactual)", 7.8, y0, 3.0, 1.2, fill=LIGHT, size=15, bold=True, line=SPEAKER["David"])
-    box(s, "¿Intervenir un factor en el simulador cambia el resultado como dice la explicación?", 2.2, 5.45, 8.6, 0.95, fill=SPEAKER["David"], color=RGBColor(255, 255, 255), size=16, bold=True)
+    box(s, "Explicación\n(SHAP · IG · contrafactual)", 7.8, y0, 3.0, 1.2, fill=LIGHT, size=15, bold=True, line=ACCENT)
+    box(s, "¿Intervenir un factor en el simulador cambia el resultado como dice la explicación?", 2.2, 5.45, 8.6, 0.95, fill=ACCENT, color=RGBColor(255, 255, 255), size=16, bold=True)
     arrow(s, 9.1, 4.98, 0.35, 0.4, shape=MSO_SHAPE.DOWN_ARROW); arrow(s, 2.0, 4.98, 0.35, 0.4, shape=MSO_SHAPE.UP_ARROW)
-    sl.append((2, "David", "El problema", notes))
+    sl.append((2, "Gabriel", "El problema", notes))
 
     # 3 ---------------------------------------------------------------------------------------------
     notes = ("El simulador está basado en HANDY, un modelo publicado en 2014 en Ecological Economics. Tiene cuatro variables: plebeyos, élites, naturaleza y riqueza. "
@@ -172,29 +169,29 @@ def build():
              "ciclos de colapso y los colapsos por desigualdad y por agotamiento de la naturaleza. Una salvedad honesta: el umbral exacto del colapso irreversible igualitario depende del integrador, "
              "y no lo igualamos con exactitud. Lo extendimos con temperatura, agua y eventos extremos aleatorios, hasta tener once factores. "
              "Cuatro son accionables, o sea palancas de política: depleción, desigualdad, consumo y eficiencia hídrica. Los demás son datos del entorno. Colapso significa que la población cae por debajo del diez por ciento de su pico.")
-    s = new_slide(prs, 3, "El simulador: HANDY extendido", "David", notes)
+    s = new_slide(prs, 3, "El simulador: HANDY extendido", "Gabriel", notes)
     bullets(s, ["4 variables (plebeyos, élites, naturaleza, riqueza); ecuaciones verificadas contra el paper de 2014 (y un error nuestro corregido).",
                 "Extensiones: temperatura, agua y eventos extremos (Poisson) → 11 factores; 4 accionables (δ, κ, s, eficiencia hídrica).",
                 "Colapso = población < 10 % de su pico (o < 20 % de la inicial) antes del año 600."], 0.55, 1.2, 12.2, 1.8, size=17)
     picture(s, "fig_escenarios_handy.png", 0.55, 3.0, 12.2, 4.0)
-    sl.append((3, "David", "El simulador", notes))
+    sl.append((3, "Gabriel", "El simulador", notes))
 
     # 4 ---------------------------------------------------------------------------------------------
-    notes = (f"Gracias, David. Con el simulador generamos {D['n']:,} planetas, muestreando las once condiciones con Latin Hypercube. Ajustamos los rangos para que la frontera no fuera trivial: "
+    notes = (f"Gracias, Gabriel. Con el simulador generamos {D['n']:,} planetas, muestreando las once condiciones con Latin Hypercube. Ajustamos los rangos para que la frontera no fuera trivial: "
              f"la supervivencia quedó en {D['surv']:.1%}. La generación tarda unos diez segundos porque el simulador está vectorizado. "
              f"El split es 70, 15 y 15 por planeta, y la normalización se ajusta solo con train. "
              f"Como los eventos extremos son aleatorios, las mismas condiciones pueden dar resultados distintos. Por eso, para 500 planetas de test corrimos 32 réplicas con distintas semillas "
              f"y obtuvimos la probabilidad verdadera de supervivencia. En el {D['mc_inter']:.0%} de esos planetas la probabilidad es intermedia, o sea que hay incertidumbre real. "
              "Esta probabilidad verdadera nos sirve para evaluar la calibración de los modelos y, después, como verdad para las explicaciones. "
              "A la derecha ven tres planetas que sobreviven y tres que colapsan; las franjas naranja son eventos extremos.")
-    s = new_slide(prs, 4, "Datos: 50 000 planetas y una verdad de referencia", "Jonathan", notes)
+    s = new_slide(prs, 4, "Datos: 50 000 planetas y una verdad de referencia", "David", notes)
     bullets(s, [f"{D['n']:,} planetas (LHS), 11 factores; supervivencia {D['surv']:.1%}.",
                 "Split 70/15/15 por planeta; normalización solo con train.",
                 "Eventos aleatorios → mismas condiciones, resultados distintos.",
                 f"Monte Carlo: 500 planetas de test × 32 réplicas = P(sobrevive | parámetros). En {D['mc_inter']:.0%} la probabilidad es intermedia."], 0.55, 1.3, 5.1, 5.4, size=17)
     picture(s, "fig_eda_trayectorias.png", 5.8, 1.3, 7.1, 4.2)
     picture(s, "fig_eda_clases_tiempos.png", 5.8, 5.2, 7.1, 1.8)
-    sl.append((4, "Jonathan", "Datos y verdad de referencia", notes))
+    sl.append((4, "David", "Datos y verdad de referencia", notes))
 
     # 5 ---------------------------------------------------------------------------------------------
     notes = (f"Planteamos dos tareas. En la tarea a, un MLP lee las once condiciones iniciales y predice la probabilidad de supervivencia. Usa dropout, AdamW y early stopping, como vimos en la sesión ocho. "
@@ -202,20 +199,20 @@ def build():
              "La entrenamos con truncamiento aleatorio de k, así un solo modelo sirve para cualquier ventana. Para no medir una ventaja trivial, solo evaluamos planetas que siguen vivos al final de la ventana, y reportamos cuántos quedan fuera. "
              f"Exigimos que la red demuestre que aporta algo: comparamos con regresión logística y con gradient boosting, LightGBM. "
              f"Hicimos búsqueda de hiperparámetros, entrenamos con {nseeds} semillas y calculamos intervalos de confianza con bootstrap pareado sobre los planetas de test.")
-    s = new_slide(prs, 5, "Modelos: la red tiene que ganarse su lugar", "Jonathan", notes)
+    s = new_slide(prs, 5, "Modelos: la red tiene que ganarse su lugar", "David", notes)
     y0 = 1.45
-    box(s, "11 factores del planeta", 0.6, y0, 2.6, 0.9, size=14, bold=True, line=SPEAKER["Jonathan"]); arrow(s, 3.3, y0 + 0.28, 0.7)
-    box(s, "MLP\ndropout · AdamW · early stopping", 4.1, y0, 3.6, 0.9, size=13, bold=True, fill=SPEAKER["Jonathan"], color=RGBColor(255, 255, 255)); arrow(s, 7.8, y0 + 0.28, 0.7)
-    box(s, "P(sobrevive) · tarea (a)", 8.6, y0, 3.6, 0.9, size=14, bold=True, line=SPEAKER["Jonathan"])
+    box(s, "11 factores del planeta", 0.6, y0, 2.6, 0.9, size=14, bold=True, line=ACCENT); arrow(s, 3.3, y0 + 0.28, 0.7)
+    box(s, "MLP\ndropout · AdamW · early stopping", 4.1, y0, 3.6, 0.9, size=13, bold=True, fill=ACCENT, color=RGBColor(255, 255, 255)); arrow(s, 7.8, y0 + 0.28, 0.7)
+    box(s, "P(sobrevive) · tarea (a)", 8.6, y0, 3.6, 0.9, size=14, bold=True, line=ACCENT)
     y1 = 2.75
-    box(s, "Primeros k % de la trayectoria\n+ 11 factores", 0.6, y1, 3.4, 0.9, size=13, bold=True, line=SPEAKER["Jonathan"]); arrow(s, 4.1, y1 + 0.28, 0.5)
-    box(s, "LSTM\ntruncamiento aleatorio de k", 4.7, y1, 3.0, 0.9, size=13, bold=True, fill=SPEAKER["Jonathan"], color=RGBColor(255, 255, 255)); arrow(s, 7.8, y1 + 0.28, 0.7)
-    box(s, "P(sobrevive) · tarea (b)", 8.6, y1, 3.6, 0.9, size=14, bold=True, line=SPEAKER["Jonathan"])
+    box(s, "Primeros k % de la trayectoria\n+ 11 factores", 0.6, y1, 3.4, 0.9, size=13, bold=True, line=ACCENT); arrow(s, 4.1, y1 + 0.28, 0.5)
+    box(s, "LSTM\ntruncamiento aleatorio de k", 4.7, y1, 3.0, 0.9, size=13, bold=True, fill=ACCENT, color=RGBColor(255, 255, 255)); arrow(s, 7.8, y1 + 0.28, 0.7)
+    box(s, "P(sobrevive) · tarea (b)", 8.6, y1, 3.6, 0.9, size=14, bold=True, line=ACCENT)
     bullets(s, ["Baselines obligatorios: regresión logística, LightGBM, MLP sobre la ventana, MLP solo con parámetros.",
                 f"Búsqueda de hiperparámetros (MLP: 12 configuraciones; LSTM: 8), {nseeds} semillas, IC 95 % por bootstrap pareado.",
                 "Sin fuga: solo se evalúan planetas aún vivos al final de la ventana; se reporta cuántos quedan fuera.",
                 "Ablación: LSTM con y sin parámetros estáticos."], 0.55, 4.05, 12.2, 2.9, size=18)
-    sl.append((5, "Jonathan", "Modelos", notes))
+    sl.append((5, "David", "Modelos", notes))
 
     # 6 ---------------------------------------------------------------------------------------------
     d_ml = BA["mlp_minus_lightgbm"]["roc_auc"]
@@ -226,7 +223,7 @@ def build():
              f"Entre la LSTM y LightGBM, {lstm_vs_lgb_txt} (diferencia {lstm_vs_lgb60[1]:+.4f}, intervalo {lstm_vs_lgb60[0]:+.4f} a {lstm_vs_lgb60[2]:+.4f}). "
              f"Sin parámetros estáticos, la LSTM parte de {B[0]['lstm_no_static']['roc_auc']:.2f}, o sea casi azar, y sube a {B[60]['lstm_no_static']['roc_auc']:.2f}: la trayectoria sola acaba informando, pero con poca ventana los parámetros son indispensables. "
              "Es importante aclarar que entre distintos k no se pueden comparar las métricas directamente, porque cambia la población evaluada.")
-    s = new_slide(prs, 6, "Resultados de los modelos", "Jonathan", notes)
+    s = new_slide(prs, 6, "Resultados de los modelos", "David", notes)
     rows = [["Tarea (a)", "ROC-AUC", "Brier", "MAE vs P verdadera"]]
     for k, lab in (("logistic", "Regresión logística"), ("lightgbm", "LightGBM"), ("mlp", "MLP")):
         rows.append([lab, f"{A[k]['roc_auc']:.3f} ± {SA[k]['roc_auc']:.3f}", f"{A[k]['brier']:.3f} ± {SA[k]['brier']:.3f}", f"{A[k]['mc_mae']:.3f} ± {SA[k]['mc_mae']:.3f}"])
@@ -235,26 +232,26 @@ def build():
                 f"k = 60 %: LSTM {B[60]['lstm']['roc_auc']:.3f} vs. LightGBM {B[60]['lightgbm_summary']['roc_auc']:.3f} → {lstm_vs_lgb_txt}.",
                 "Sin parámetros estáticos, la LSTM parte casi del azar (k = 0)."], 7.4, 1.25, 5.5, 2.0, size=14)
     picture(s, "fig_tarea_b_curva_k.png", 0.55, 3.15, 12.2, 3.85)
-    sl.append((6, "Jonathan", "Resultados de modelos", notes))
+    sl.append((6, "David", "Resultados de modelos", notes))
 
     # 7 ---------------------------------------------------------------------------------------------
-    notes = ("Gracias, Jonathan. Ahora la parte central del proyecto. Calculamos tres explicaciones sobre el MLP y el boosting: SHAP, que con once factores calculamos de forma exacta, "
+    notes = ("Gracias, David. Ahora la parte central del proyecto. Calculamos tres explicaciones sobre el MLP y el boosting: SHAP, que con once factores calculamos de forma exacta, "
              "Integrated Gradients con Captum, y TreeSHAP sobre LightGBM. Algo clave: todos usan el mismo baseline, el planeta medio de entrenamiento, y el mismo espacio de salida, el logit de supervivencia. "
              "Así las comparaciones son justas. Comprobamos que SHAP exacto coincide con KernelSHAP y que cada método cumple su propiedad de completitud. "
              "Pero que las explicaciones coincidan entre sí no prueba que sean correctas. Por eso las verificamos de cuatro maneras: "
              "uno, intervenir un factor en el modelo; dos, intervenirlo en el simulador, con sesenta y cuatro réplicas y los mismos números aleatorios para que la comparación tenga poco ruido; "
              "tres, curvas de eliminación: si devolvemos al valor base los factores en el orden que dice la explicación, el resultado debe degradarse más rápido que con un orden aleatorio; "
              "y cuatro, una prueba de cordura de Adebayo y colaboradores: si destruimos el modelo, la explicación debe dejar de concordar con el simulador.")
-    s = new_slide(prs, 7, "Explicaciones y cómo las verificamos", "Gabriel", notes)
+    s = new_slide(prs, 7, "Explicaciones y cómo las verificamos", "Jonathan", notes)
     box(s, "Mismo baseline (planeta medio de entrenamiento)\nMisma salida (logit de supervivencia)", 0.55, 1.3, 7.2, 0.95, fill=NAVY, color=RGBColor(255, 255, 255), size=15, bold=True)
     for i, (lab, sub) in enumerate((("SHAP exacto", "MLP · 2¹¹ coaliciones"), ("Integrated Gradients", "MLP · Captum"), ("TreeSHAP", "LightGBM"))):
-        box(s, f"{lab}\n{sub}", 0.55 + i * 2.45, 2.45, 2.3, 1.0, size=13, bold=True, line=SPEAKER["Gabriel"])
+        box(s, f"{lab}\n{sub}", 0.55 + i * 2.45, 2.45, 2.3, 1.0, size=13, bold=True, line=ACCENT)
     bullets(s, ["Intervención en el modelo: ¿cambia el logit como dice φ?",
                 "Intervención en el simulador (64 réplicas, números aleatorios comunes): la verdad.",
                 "Curvas de eliminación: orden por atribución vs. aleatorio.",
                 "Prueba de cordura: pesos aleatorizados (Adebayo et al., 2018)."], 0.55, 3.75, 7.2, 3.2, size=17)
     picture(s, "fig_xai_beeswarm.png", 8.0, 1.3, 4.9, 5.6)
-    sl.append((7, "Gabriel", "Explicaciones y verificación", notes))
+    sl.append((7, "Jonathan", "Explicaciones y verificación", notes))
 
     # 8 ---------------------------------------------------------------------------------------------
     notes = (f"Resultados de la fidelidad. En la gráfica, las barras naranja comparan cada atribución con el efecto real en el simulador. "
@@ -265,13 +262,13 @@ def build():
              f"En las curvas de eliminación, quitar factores en el orden de SHAP cambia la probabilidad real en {dele['attribution']['sim_auc']:+.2f} en promedio, mientras que el orden aleatorio la cambia en {dele['random']['sim_auc']:+.2f}: las explicaciones sí apuntan a lo que importa. "
              f"Y la prueba de cordura pasa: con el modelo aleatorizado la concordancia con el simulador cae de {san['vs_simulator_trained']['spearman']:.2f} a {san['vs_simulator_randomised']['spearman']:.2f}. "
              "La conclusión honesta: las explicaciones son útiles y dependen del modelo, pero no son una verdad; hay que verificarlas.")
-    s = new_slide(prs, 8, "¿Son fieles las explicaciones? Resultados", "Gabriel", notes)
+    s = new_slide(prs, 8, "¿Son fieles las explicaciones? Resultados", "Jonathan", notes)
     picture(s, "fig_fidelidad_spearman.png", 0.55, 1.2, 12.2, 3.6)
     bullets(s, [f"Spearman vs. simulador: {M(bd,'SHAP (MLP)','vs_simulator','spearman'):.2f} (SHAP), {M(bd,'IG (MLP)','vs_simulator','spearman'):.2f} (IG), {M(bd,'TreeSHAP (LightGBM)','vs_simulator','spearman'):.2f} (TreeSHAP) en planetas de frontera; signo correcto en ≈{M(bd,'SHAP (MLP)','vs_simulator','sign_agreement'):.0%}; factor n.º 1 acertado en ≈{M(bd,'SHAP (MLP)','vs_simulator','top1'):.0%}–{M(mc,'SHAP (MLP)','vs_simulator','top1'):.0%}.",
                 f"Eliminación en el simulador: orden SHAP {dele['attribution']['sim_auc']:+.2f} vs. aleatorio {dele['random']['sim_auc']:+.2f} (cambio medio de P).",
                 f"Prueba de cordura: Spearman vs. simulador {san['vs_simulator_trained']['spearman']:.2f} (modelo entrenado) → {san['vs_simulator_randomised']['spearman']:.2f} (pesos aleatorios)."],
             0.55, 4.9, 12.2, 2.1, size=15)
-    sl.append((8, "Gabriel", "Fidelidad: resultados", notes))
+    sl.append((8, "Jonathan", "Fidelidad: resultados", notes))
 
     # 9 ---------------------------------------------------------------------------------------------
     notes = (f"Una explicación útil debería permitir actuar. Por eso buscamos contrafactuales: el cambio mínimo en las palancas accionables —depleción, desigualdad, consumo y eficiencia hídrica— que lleva el planeta a sobrevivir. "
@@ -280,37 +277,35 @@ def build():
              f"Cambiar una sola palanca resuelve solo el {cs['solved_share']:.0%} de los casos. "
              "Ahora les mostramos la aplicación en Streamlit: movemos los factores de un planeta, vemos la simulación con sus réplicas, la explicación SHAP y pedimos un contrafactual que el simulador verifica. "
              "[DEMO EN VIVO: elegir el escenario 'Sobreexplotación (δ alto)', mostrar el colapso, abrir la pestaña de explicación y pulsar 'Buscar contrafactual'.]")
-    s = new_slide(prs, 9, "Contrafactuales verificados y demo", "Gabriel", notes)
+    s = new_slide(prs, 9, "Contrafactuales verificados y demo", "Jonathan", notes)
     bullets(s, ["Pregunta: ¿cuál es el cambio mínimo en las palancas accionables (δ, κ, s, eficiencia hídrica) que lleva el planeta a sobrevivir?",
                 f"Gradiente: {gs['solved_share']:.0%} resueltos; {gs['simulator_valid']:.0%} válidos en el simulador; P real {gs['mean_true_p_before']:.2f} → {gs['mean_true_p_after']:.2f}.",
                 f"Una sola palanca: {cs['solved_share']:.0%} resueltos; {cs['simulator_valid']:.0%} válidos en el simulador.",
                 "Los factores no accionables (temperatura, agua, eventos) nunca se modifican."], 0.55, 1.25, 7.4, 2.5, size=16)
-    box(s, "DEMO EN VIVO\nstreamlit run app/streamlit_app.py", 8.3, 1.4, 4.5, 1.7, fill=SPEAKER["Gabriel"], color=RGBColor(255, 255, 255), size=17, bold=True)
+    box(s, "DEMO EN VIVO\nstreamlit run app/streamlit_app.py", 8.3, 1.4, 4.5, 1.7, fill=ACCENT, color=RGBColor(255, 255, 255), size=17, bold=True)
     picture(s, "fig_contrafactuales.png", 0.55, 3.75, 12.2, 3.2)
-    sl.append((9, "Gabriel", "Contrafactuales y demo", notes))
+    sl.append((9, "Jonathan", "Contrafactuales y demo", notes))
 
     # 10 --------------------------------------------------------------------------------------------
-    notes = (f"Para cerrar. Primero, el modelo: la red sí aporta frente a los baselines en la tarea a, con una ventaja pequeña pero con intervalo de confianza que excluye cero; la regresión logística, en cambio, falla. "
+    notes = (f"Gracias, Jonathan. Para cerrar. Primero, el modelo: la red sí aporta frente a los baselines en la tarea a, con una ventaja pequeña pero con intervalo de confianza que excluye cero; la regresión logística, en cambio, falla. "
              "En alerta temprana, la trayectoria ayuda sobre todo en ventanas largas. Segundo, las explicaciones: concuerdan con la realidad del simulador de forma moderada, mejor que el azar y que un orden aleatorio, y pasan la prueba de cordura, pero no son una verdad. "
              f"Tercero, los contrafactuales verificados con el simulador funcionan en la mayoría de casos. Entre las limitaciones: los efectos de una intervención individual no capturan interacciones; "
              "las constantes de temperatura y agua son supuestos nuestros; y no reprodujimos con exactitud el umbral del colapso irreversible del paper. "
-             "Sobre el uso de la IA: la usamos para escribir código y borradores, y está documentado en el repositorio, con lo que funcionó y lo que falló. El caso más importante: al verificar contra el paper original encontramos un error en la mortalidad de las élites que la IA había introducido; "
-             "lo detectamos, lo corregimos con una prueba unitaria y rehicimos todos los resultados. Lección: la IA acelera, pero hay que verificar contra la fuente. Gracias; quedamos atentos a sus preguntas.")
-    s = new_slide(prs, 10, "Conclusiones, límites y uso de la IA", "David", notes)
+             "Gracias; quedamos atentos a sus preguntas.")
+    s = new_slide(prs, 10, "Conclusiones y límites", "Gabriel", notes)
     cols = (("Lo que encontramos", ["La red supera a la logística y, por poco pero con IC, a LightGBM.", "La trayectoria ayuda sobre todo con ventanas largas.", "Las explicaciones concuerdan con el simulador (ρ ≈ 0.6–0.7) y pasan la prueba de cordura.", f"{gs['simulator_valid']:.0%} de los contrafactuales funcionan en el simulador."]),
-            ("Límites", ["Efecto de un factor a la vez: no captura interacciones.", "Temperatura y agua: supuestos nuestros, sin calibración.", "No igualamos el umbral del Tipo-N del paper.", f"Modelos con {nseeds} semillas; un solo simulador."]),
-            ("Uso de la IA", ["Código y borradores generados con IA; historial en docs/PROMPTS.md.", "Verificar contra el paper encontró un error de la IA (mortalidad de élites).", "Lo corregimos con un test y rehicimos los resultados.", "Lección: la IA acelera; la verificación es nuestra."]))
+            ("Límites", ["Efecto de un factor a la vez: no captura interacciones.", "Temperatura y agua: supuestos nuestros, sin calibración.", "No igualamos el umbral del Tipo-N del paper.", f"Modelos con {nseeds} semillas; un solo simulador."]))
     for i, (h, items) in enumerate(cols):
-        box(s, h, 0.55 + i * 4.15, 1.3, 3.95, 0.6, fill=SPEAKER["David"], color=RGBColor(255, 255, 255), size=16, bold=True)
-        bullets(s, items, 0.55 + i * 4.15, 2.05, 3.95, 4.8, size=17)
-    sl.append((10, "David", "Conclusiones", notes))
+        box(s, h, 0.55 + i * 6.2, 1.3, 5.95, 0.6, fill=ACCENT, color=RGBColor(255, 255, 255), size=18, bold=True)
+        bullets(s, items, 0.55 + i * 6.2, 2.1, 5.95, 4.8, size=19)
+    sl.append((10, "Gabriel", "Conclusiones", notes))
 
     out = ROOT / "report/Presentacion.pptx"; prs.save(out); print("OK ->", out)
     return D, sl, dict(A=A, SA=SA, B=B, SB=SB, BB=BB, BA=BA, fd=fd, cf=cf, bd=bd, mc=mc, dele=dele, san=san, lstm_vs_lgb_txt=lstm_vs_lgb_txt)
 
 
 def write_markdown(D, sl, X):
-    by = {"David": [], "Jonathan": [], "Gabriel": []}
+    by = {"Gabriel": [], "David": [], "Jonathan": []}
     for n, who, title, notes in sl:
         by[who].append((n, title, notes))
     words = lambda t: len(t.split())
@@ -328,13 +323,13 @@ def write_markdown(D, sl, X):
         lines += [f"## Diapositiva {n} · {title} — {who}", "", notes, ""]
     lines += ["## Preguntas probables y quién las toma", "",
               "| Pregunta | Responde | Respuesta corta |", "|---|---|---|",
-              "| ¿Por qué un simulador y no datos reales? | David | Solo así existe una verdad de referencia para verificar las explicaciones. |",
-              "| ¿Qué error encontraron en HANDY? | David | La mortalidad de las élites usaba κ en el denominador; el paper usa s·x_E. Lo corregimos con un test y regeneramos todo. |",
-              "| ¿La red es mejor que LightGBM? | Jonathan | Por poco (ΔAUC con IC 95 % que excluye 0), pero sí; y mucho mejor que la logística. |",
-              "| ¿Por qué solo planetas vivos en la tarea (b)? | Jonathan | Para evitar la fuga trivial: un planeta ya colapsado es obvio. Se reporta cuántos quedan fuera. |",
-              "| ¿Por qué SHAP exacto? | Gabriel | Con 11 factores hay 2048 coaliciones: se calcula exacto y se comprobó contra KernelSHAP. |",
-              "| ¿Qué significa que ρ ≈ 0.65? | Gabriel | Concuerdan bastante con el efecto real pero no perfectamente; parte del error es del propio modelo. |",
-              "| ¿Los contrafactuales son confiables? | Gabriel | Se verificaron con el simulador: ≈90 % funcionan; el resto muestra dónde el sustituto se equivoca. |"]
+              "| ¿Por qué un simulador y no datos reales? | Gabriel | Solo así existe una verdad de referencia para verificar las explicaciones. |",
+              "| ¿Qué error encontraron en HANDY? | Gabriel | La mortalidad de las élites usaba κ en el denominador; el paper usa s·x_E. Lo corregimos con un test y regeneramos todo. |",
+              "| ¿La red es mejor que LightGBM? | David | Por poco (ΔAUC con IC 95 % que excluye 0), pero sí; y mucho mejor que la logística. |",
+              "| ¿Por qué solo planetas vivos en la tarea (b)? | David | Para evitar la fuga trivial: un planeta ya colapsado es obvio. Se reporta cuántos quedan fuera. |",
+              "| ¿Por qué SHAP exacto? | Jonathan | Con 11 factores hay 2048 coaliciones: se calcula exacto y se comprobó contra KernelSHAP. |",
+              "| ¿Qué significa que ρ ≈ 0.65? | Jonathan | Concuerdan bastante con el efecto real pero no perfectamente; parte del error es del propio modelo. |",
+              "| ¿Los contrafactuales son confiables? | Jonathan | Se verificaron con el simulador: ≈90 % funcionan; el resto muestra dónde el sustituto se equivoca. |"]
     (ROOT / "docs/PRESENTACION.md").write_text("\n".join(lines), encoding="utf8"); print("OK -> docs/PRESENTACION.md")
 
 

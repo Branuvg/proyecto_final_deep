@@ -20,7 +20,7 @@ def main():
     md = f"""# Guion del video (≈ 10 minutos, tres hablantes)
 
 **Qué debe mostrar el video (rúbrica):** el funcionamiento de la solución, su implementación y los hallazgos principales.
-**Reparto:** David (0:00–3:15) · Jonathan (3:15–6:30) · Gabriel (6:30–10:15) · cierre conjunto (10:15–10:45).
+**Reparto:** Gabriel (0:00–3:15) · David (3:15–6:30) · Jonathan (6:30–10:15) · cierre conjunto (10:15–10:45).
 Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el texto sugerido (léanlo con sus palabras); lo que va en *cursiva* es lo que se ve en pantalla.
 
 ## Antes de grabar (todos)
@@ -34,10 +34,10 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 
 ---
 
-## Parte 1 · David (0:00–3:15)
+## Parte 1 · Gabriel (0:00–3:15)
 
 ### Escena 1 (0:00–0:30) · Portada — *diapositiva 1, cámara opcional*
-"Hola, somos David Domínguez, Jonathan Díaz y Gabriel Bran, de Deep Learning, sección 10. Este es nuestro proyecto final: un simulador de mundos habitables donde una red neuronal predice si una civilización sobrevive, y donde podemos comprobar si sus explicaciones son verdaderas. Yo presento el problema y el simulador; Jonathan, los datos y modelos; y Gabriel, las explicaciones y la demo."
+"Hola, somos Gabriel Bran, David Domínguez y Jonathan Díaz, de Deep Learning, sección 10. Este es nuestro proyecto final: un simulador de mundos habitables donde una red neuronal predice si una civilización sobrevive, y donde podemos comprobar si sus explicaciones son verdaderas. Yo presento el problema y el simulador; David, los datos y modelos; y Jonathan, las explicaciones y la demo."
 
 ### Escena 2 (0:30–1:30) · El problema — *diapositiva 2*
 "Los simuladores científicos son caros, así que se entrenan redes como modelos sustitutos. Pero una red es una caja negra, y los métodos de explicabilidad, como SHAP, casi nunca tienen una explicación verdadera para compararse. Nuestro truco es usar un problema donde sí la hay: el propio simulador. Podemos cambiar un factor y ver qué pasa de verdad. Entonces nuestra pregunta es: ¿cambia el resultado como dice la explicación?"
@@ -48,11 +48,11 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 - *Terminal: `pytest -q` → 15 tests pasan.*
 "Tiene quince pruebas unitarias: no negatividad, determinismo, el equilibrio analítico del paper, y una que agregamos al verificar contra el artículo original, porque encontramos un error nuestro en la mortalidad de las élites. Lo corregimos y regeneramos todos los resultados."
 - *Abrir `notebooks/01_simulador_validacion.ipynb` y mostrar la figura de escenarios.*
-"Con las ecuaciones correctas reproducimos los escenarios del paper: equilibrio, oscilaciones, ciclos de colapso, y el colapso por desigualdad y por agotamiento de la naturaleza. Lo extendimos con temperatura, agua y eventos extremos aleatorios, para tener once factores; cuatro son palancas accionables. Una salvedad: el umbral exacto del colapso irreversible igualitario depende del integrador y no lo igualamos con exactitud. Paso a Jonathan."
+"Con las ecuaciones correctas reproducimos los escenarios del paper: equilibrio, oscilaciones, ciclos de colapso, y el colapso por desigualdad y por agotamiento de la naturaleza. Lo extendimos con temperatura, agua y eventos extremos aleatorios, para tener once factores; cuatro son palancas accionables. Una salvedad: el umbral exacto del colapso irreversible igualitario depende del integrador y no lo igualamos con exactitud. Paso a David."
 
 ---
 
-## Parte 2 · Jonathan (3:15–6:30)
+## Parte 2 · David (3:15–6:30)
 
 ### Escena 4 (3:15–4:45) · Dataset — *terminal → notebook 02*
 - *Terminal: `python -m worldsim.data.generate --config configs/dataset.yaml`.* (tarda ≈ 10 s)
@@ -66,11 +66,11 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 - *Notebook 03: tabla de la tarea (a) y diferencias pareadas.*
 "Comparamos contra regresión logística y LightGBM, con {nseeds} semillas y búsqueda de hiperparámetros. La logística llega a {A['logistic']['roc_auc']:.2f} de ROC-AUC porque la frontera es no lineal; LightGBM, {A['lightgbm']['roc_auc']:.3f}; y el MLP, {A['mlp']['roc_auc']:.3f}. La ventaja del MLP es pequeña, {BA[1]:+.4f}, pero su intervalo de confianza del 95 % va de {BA[0]:+.4f} a {BA[2]:+.4f}, así que es real."
 - *Notebook 03: curva de desempeño frente a k.*
-"En la alerta temprana, solo evaluamos planetas que siguen vivos al final de la ventana, para no medir algo trivial. Con una ventana larga, la LSTM llega a {B[60]['lstm']['roc_auc']:.3f} y LightGBM con resúmenes a {B[60]['lightgbm_summary']['roc_auc']:.3f}; sin los parámetros, la LSTM parte del azar. La trayectoria ayuda, sobre todo con ventanas largas. Le paso a Gabriel."
+"En la alerta temprana, solo evaluamos planetas que siguen vivos al final de la ventana, para no medir algo trivial. Con una ventana larga, la LSTM llega a {B[60]['lstm']['roc_auc']:.3f} y LightGBM con resúmenes a {B[60]['lightgbm_summary']['roc_auc']:.3f}; sin los parámetros, la LSTM parte del azar. La trayectoria ayuda, sobre todo con ventanas largas. Le paso a Jonathan."
 
 ---
 
-## Parte 3 · Gabriel (6:30–10:15)
+## Parte 3 · Jonathan (6:30–10:15)
 
 ### Escena 6 (6:30–7:30) · Explicaciones — *notebook 04*
 - *Mostrar el beeswarm y una cascada.*
@@ -94,9 +94,9 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 ---
 
 ## Cierre conjunto (10:15–10:45) · *diapositiva 10*
-- **David:** "La red sí aporta frente a los baselines, aunque por poco, y la trayectoria ayuda con ventanas largas."
-- **Jonathan:** "Nuestros límites: efectos de un factor a la vez, constantes de temperatura y agua sin calibrar, y una sola familia de simulador."
-- **Gabriel:** "Lo importante: una explicación convincente no es una explicación correcta; con un simulador pudimos medirlo. Todo el código, el documento y el historial de uso de IA están en el repositorio: github.com/Branuvg/proyecto_final_deep. Gracias."
+- **Gabriel:** "La red sí aporta frente a los baselines, aunque por poco, y la trayectoria ayuda con ventanas largas."
+- **David:** "Nuestros límites: efectos de un factor a la vez, constantes de temperatura y agua sin calibrar, y una sola familia de simulador."
+- **Jonathan:** "Lo importante: una explicación convincente no es una explicación correcta; con un simulador pudimos medirlo. Todo el código, el documento y el historial de uso de IA están en el repositorio: github.com/Branuvg/proyecto_final_deep. Gracias."
 
 ## Si algo falla durante la grabación
 - *Streamlit tarda en abrir:* esperar 10 s; si falla, grabar el navegador con la app ya abierta.

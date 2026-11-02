@@ -20,7 +20,7 @@ def main():
     md = f"""# Guion del video (≈ 10 minutos, tres hablantes)
 
 **Qué debe mostrar el video (rúbrica):** el funcionamiento de la solución, su implementación y los hallazgos principales.
-**Reparto:** Gabriel (0:00–3:15) · David (3:15–6:30) · Jonathan (6:30–10:15) · cierre conjunto (10:15–10:45).
+**Reparto:** Gabriel (0:00–3:15) · David (3:15–6:30) · Jonathan (6:30–8:45) · Gabriel, demo (8:45–10:15) · cierre conjunto (10:15–10:45).
 Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el texto sugerido (léanlo con sus palabras); lo que va en *cursiva* es lo que se ve en pantalla.
 
 ## Antes de grabar (todos)
@@ -37,7 +37,7 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 ## Parte 1 · Gabriel (0:00–3:15)
 
 ### Escena 1 (0:00–0:30) · Portada — *diapositiva 1, cámara opcional*
-"Hola, somos Gabriel Bran, David Domínguez y Jonathan Díaz, de Deep Learning, sección 10. Este es nuestro proyecto final: un simulador de mundos habitables donde una red neuronal predice si una civilización sobrevive, y donde podemos comprobar si sus explicaciones son verdaderas. Yo presento el problema y el simulador; David, los datos y modelos; y Jonathan, las explicaciones y la demo."
+"Hola, somos Gabriel Bran, David Domínguez y Jonathan Díaz, de Deep Learning, sección 10. Este es nuestro proyecto final: un simulador de mundos habitables donde una red neuronal predice si una civilización sobrevive, y donde podemos comprobar si sus explicaciones son verdaderas. Yo presento el problema, el simulador y la demo; David, los datos y modelos; y Jonathan, las explicaciones."
 
 ### Escena 2 (0:30–1:30) · El problema — *diapositiva 2*
 "Los simuladores científicos son caros, así que se entrenan redes como modelos sustitutos. Pero una red es una caja negra, y los métodos de explicabilidad, como SHAP, casi nunca tienen una explicación verdadera para compararse. Nuestro truco es usar un problema donde sí la hay: el propio simulador. Podemos cambiar un factor y ver qué pasa de verdad. Entonces nuestra pregunta es: ¿cambia el resultado como dice la explicación?"
@@ -70,7 +70,7 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 
 ---
 
-## Parte 3 · Jonathan (6:30–10:15)
+## Parte 3 · Jonathan (6:30–8:45)
 
 ### Escena 6 (6:30–7:30) · Explicaciones — *notebook 04*
 - *Mostrar el beeswarm y una cascada.*
@@ -80,7 +80,9 @@ Cada parte combina **voz + pantalla compartida**. Lo que va entre comillas es el
 - *Mostrar `fig_fidelidad_spearman` y la tabla.*
 "Para comprobarlo, devolvemos cada factor a su valor base y medimos el efecto real en el simulador, con 64 réplicas. La correlación por planeta entre la atribución y el efecto real es de {sp(bd, 'SHAP (MLP)'):.2f} para SHAP, {sp(bd, 'IG (MLP)'):.2f} para Integrated Gradients y {sp(bd, 'TreeSHAP (LightGBM)'):.2f} para TreeSHAP en planetas cerca de la frontera. Bastante bien, pero lejos de perfecto: el signo acierta en cerca del {bd['methods']['SHAP (MLP)']['vs_simulator']['sign_agreement']:.0%}, y el factor más importante, solo en la mitad de los casos."
 - *Mostrar `fig_fidelidad_eliminacion` y los números de cordura.*
-"Si quitamos los factores en el orden de SHAP, la probabilidad real cambia en {dele['attribution']['sim_auc']:+.2f}; en orden aleatorio, en {dele['random']['sim_auc']:+.2f}. Y la prueba de cordura pasa: con los pesos de la red aleatorizados, la concordancia con el simulador cae de {san['vs_simulator_trained']['spearman']:.2f} a {san['vs_simulator_randomised']['spearman']:.2f}. Las explicaciones son útiles y dependen del modelo, pero no son una verdad."
+"Si quitamos los factores en el orden de SHAP, la probabilidad real cambia en {dele['attribution']['sim_auc']:+.2f}; en orden aleatorio, en {dele['random']['sim_auc']:+.2f}. Y la prueba de cordura pasa: con los pesos de la red aleatorizados, la concordancia con el simulador cae de {san['vs_simulator_trained']['spearman']:.2f} a {san['vs_simulator_randomised']['spearman']:.2f}. Las explicaciones son útiles y dependen del modelo, pero no son una verdad. Le paso a Gabriel para la demo."
+
+## Parte 4 · Gabriel, demo en vivo (8:45–10:15)
 
 ### Escena 8 (8:45–10:15) · Demo en vivo — *navegador con Streamlit*
 - *Terminal: `streamlit run app/streamlit_app.py`.*

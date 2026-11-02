@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import copy
 import re
 import sys
 from pathlib import Path
@@ -28,6 +29,7 @@ TITLE = "Simulador de mundos habitables: predicción de supervivencia con modelo
 COURSE, SECTION, KIND = "Deep Learning", "Sección 10", "Proyecto Final"
 MEMBERS = ["David Domínguez, 23712", "Jonathan Díaz, 23837", "Gabriel Bran, 23590"]
 REPO = "https://github.com/Branuvg/proyecto_final_deep"
+VIDEO = "https://youtu.be/7lbp6N2wyMQ"
 # -----------------------------------------------------------------------------------------------
 
 FONT = "Calibri"
@@ -56,6 +58,8 @@ def fill_cover(doc):
     set_run_texts(P[10], {0: TITLE})
     set_run_texts(P[22], {2: MEMBERS[0] + "  ", 4: MEMBERS[1] + "  ", 6: MEMBERS[2] + " "})
     P[27].runs[-1].text = "Repo: " + REPO
+    clone = copy.deepcopy(P[27]._p); P[27]._p.addnext(clone)  # same style, one line below the repo link
+    clone_par = next(q for q in doc.paragraphs if q._p is clone); clone_par.runs[-1].text = "Video: " + VIDEO
 
 
 def clear_after_cover(doc):

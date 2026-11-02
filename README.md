@@ -83,7 +83,7 @@ tests/        pruebas unitarias (simulador y XAI)
 
 **Pendiente / limitaciones conocidas**
 - [ ] Umbral exacto del colapso Tipo-N igualitario del paper (4× reversible, 5.5× irreversible): con RK4 aparece desde ≈ 9.25×δ\*, con Euler dt = 1 desde ≈ 3.25×δ\*. No se igualó.
-- [ ] Cotejar las referencias marcadas `[VERIFICAR]` en la bibliografía.
-- [ ] Revisión visual del `.docx` y de la presentación en Word/PowerPoint (aquí solo se verificó por código).
-- [ ] Grabar el video siguiendo `docs/GUION_VIDEO.md` y exportar la presentación a PDF.
+- [x] Referencias de la bibliografía cotejadas contra las páginas oficiales.
+- [x] Revisión visual del `.docx` y de la presentación en Word y PowerPoint.
+- [ ] Grabar el video siguiendo `docs/GUION_VIDEO.md` (el PDF de la presentación ya está en `report/Presentacion.pdf`).
 - [ ] Efecto de un factor a la vez (sin interacciones); constantes de temperatura y agua sin calibración empírica.
